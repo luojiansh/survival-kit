@@ -1,6 +1,11 @@
 { config, pkgs, ... }:
 
 {
+  nix = {
+    package = pkgs.nix;
+    settings.experimental-features = [ "nix-command" "flakes" ];
+  };
+
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
   home.username = "jian";
@@ -34,6 +39,8 @@
     # (pkgs.writeShellScriptBin "my-hello" ''
     #   echo "Hello, ${config.home.username}!"
     # '')
+
+    # LazyVim
     git
     lazygit
     gcc
@@ -41,8 +48,14 @@
     ripgrep
     fd
     gh
-    opencode
     wl-clipboard
+
+    # Agent
+    opencode
+
+    # Niri
+    pkgs.swaybg
+    pkgs.xwayland-satellite # xwayland support
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -91,7 +104,7 @@
     enable = true;
     settings.user = {
       name = "Jian Luo";
-      email = "jian.luo@at.abb.com";
+      email = "jian.luo.cn@gmail.com";
     };
   };
   programs.gh = {
@@ -102,6 +115,7 @@
     };
   };
 
+  # Neovim
   programs.neovim = {
     enable = true;
     vimAlias = true;
@@ -115,7 +129,14 @@
       lua-language-server
     ];
   };
-  
-  # LazyVim
   programs.lazyvim.enable = true;
+
+  # Niri
+  programs.alacritty.enable = true; # Super+T in the default setting (terminal)
+  programs.fuzzel.enable = true; # Super+D in the default setting (app launcher)
+  programs.swaylock.enable = true; # Super+Alt+L in the default setting (screen locker)
+  programs.waybar.enable = true; # launch on startup in the default setting (bar)
+  services.mako.enable = true; # notification daemon
+  services.swayidle.enable = true; # idle management daemon
+  services.polkit-gnome.enable = true; # polkit
 }
