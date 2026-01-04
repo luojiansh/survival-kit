@@ -37,7 +37,7 @@
     }:
 
     let
-    
+
       # Helper to create a host configuration
       mkHost =
         {
@@ -109,19 +109,19 @@
 
     //
 
-    # Host configuration
-    {
-      nixosConfigurations = {
-        "AT-L-PF5S785B" = mkHost {
-          hostname = "AT-L-PF5S785B";
-          username = "luoj";
-          system = "x86_64-linux";
-        };
-        rhino = mkHost {
-          hostname = "rhino";
-          username = "jian";
-          system = "x86_64-linux";
+      # Host configuration
+      {
+        nixosConfigurations = {
+          "AT-L-PF5S785B" = mkHost {
+            hostname = "AT-L-PF5S785B";
+            username = "luoj";
+            system = "x86_64-linux";
+          };
+          rhino = mkHost {
+            hostname = "rhino";
+            username = "jian";
+            system = "x86_64-linux";
+          };
         };
       };
-    };
 }

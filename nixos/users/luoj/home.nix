@@ -1,12 +1,6 @@
-{ pkgs, ... }:
-
 {
-  imports = [
-    ../../home/common.nix
-  ];
-  
   home.username = "luoj";
-  home.homeDirectory = "luoj";
+  home.homeDirectory = "/home/luoj";
 
   # Git account
   programs.git.settings = {
