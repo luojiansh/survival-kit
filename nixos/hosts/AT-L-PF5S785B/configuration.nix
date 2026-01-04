@@ -19,18 +19,6 @@
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "25.05"; # Did you read the comment?
 
-  environment.systemPackages = [
-    pkgs.neovim
-  ];
-
-  # Global Configuration
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
-  };
-
   security.pki.certificateFiles = [ 
     ./ca-bundle-with-abb_root-zscaler-bnr_root.crt
   ];
