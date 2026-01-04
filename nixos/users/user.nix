@@ -1,9 +1,7 @@
-{ lazyvim, username, noctalia, ... }:
-
+{ username, ... }:
 {
   imports = [
-    noctalia.homeModules.default
-    lazyvim.homeManagerModules.default
     ./${username}/home.nix
+    ./common/home/home.nix
   ];
 }

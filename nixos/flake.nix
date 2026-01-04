@@ -27,77 +27,101 @@
     };
   };
 
-  outputs = inputs @
-    { self, nixpkgs, nixos-wsl, home-manager, flake-utils, lazyvim, noctalia, quickshell, ... }:
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      home-manager,
+      flake-utils,
+      ...
+    }:
 
-    # Standalone Home Manager for each architecture
-    flake-utils.lib.eachDefaultSystem (system:
     let
-      pkgs = import nixpkgs { inherit system; };
-      lib = pkgs.lib;
-      users = [ "jian" "luoj" ];
-      homeConfig = username: home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-
-        # Specify your home configuration modules here, for example,
-        # the path to your home.nix.
-        modules = [
-          ./users/${username}/home.nix
-          ./home/home.nix
-          lazyvim.homeManagerModules.default
-          noctalia.homeModules.default
-        ];
-
-        # Optionally use extraSpecialArgs
-        # to pass through arguments to home.nix
-      };
-    in
-    {
-      legacyPackages = {
-        homeConfigurations = lib.genAttrs users homeConfig;
-      };
-    })
-
-    //
-
-    # Host configuration
-    {
-    nixosConfigurations = {
-      "AT-L-PF5S785B" = let
-        username = "luoj";
-        specialArgs = { inherit username; };
-      in
+    
+      # Helper to create a host configuration
+      mkHost =
+        {
+          hostname,
+          username,
+          system,
+        }:
         nixpkgs.lib.nixosSystem {
-          inherit specialArgs;
-          system = "x86_64-linux";
-          modules = [
-            ./hosts/thinkpad/configuration.nix
-            ./users/${username}/nixos.nix
-            nixos-wsl.nixosModules.wsl
-        ];
-      };
-      machinist = let
-        username = "jian";
-        specialArgs = { inherit username; };
-      in
-        nixpkgs.lib.nixosSystem {
-          inherit specialArgs;
-          system = "x86_64-linux";
+          inherit system;
+
+          # Pass args to modules
+          specialArgs = {
+            inherit inputs;
+            inherit hostname;
+            inherit username;
+          };
+
           modules = [
             ./hosts/host.nix
-            ./hosts/machinist/configuration.nix
             ./users/${username}/nixos.nix
 
             home-manager.nixosModules.home-manager
             {
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "bak";
 
-              home-manager.extraSpecialArgs = inputs // specialArgs;
+              home-manager.extraSpecialArgs = { inherit username inputs; };
               home-manager.users.${username} = import ./users/user.nix;
             }
+          ];
+        };
+
+    in
+
+    # Standalone Home Manager for each architecture
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+        lib = pkgs.lib;
+        users = [
+          "jian"
+          "luoj"
         ];
+        homeConfig =
+          username:
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+
+            # Specify your home configuration modules here, for example,
+            # the path to your home.nix.
+            modules = [
+              ./users/user.nix
+              ./home/standalone.nix
+            ];
+
+            # Optionally use extraSpecialArgs
+            # to pass through arguments to home.nix
+            extraSpecialArgs = { inherit username inputs; };
+          };
+      in
+      {
+        legacyPackages = {
+          homeConfigurations = lib.genAttrs users homeConfig;
+        };
+      }
+    )
+
+    //
+
+    # Host configuration
+    {
+      nixosConfigurations = {
+        "AT-L-PF5S785B" = mkHost {
+          hostname = "AT-L-PF5S785B";
+          username = "luoj";
+          system = "x86_64-linux";
+        };
+        rhino = mkHost {
+          hostname = "rhino";
+          username = "jian";
+          system = "x86_64-linux";
+        };
       };
     };
-  };
 }

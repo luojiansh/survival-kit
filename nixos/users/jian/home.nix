@@ -1,8 +1,4 @@
 {
-  imports = [
-    ../../home/common.nix
-  ];
- 
   home.username = "jian";
   home.homeDirectory = "/home/jian";
 
