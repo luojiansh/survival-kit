@@ -56,7 +56,7 @@
           };
 
           modules = [
-            ./hosts/host.nix
+            ./hosts/${hostname}/nixos.nix
             ./users/${username}/nixos.nix
 
             home-manager.nixosModules.home-manager
@@ -103,6 +103,9 @@
       {
         legacyPackages = {
           homeConfigurations = lib.genAttrs users homeConfig;
+        };
+        checks = {
+          sanity = pkgs.runCommand "sanity" { } "echo ok > $out";
         };
       }
     )

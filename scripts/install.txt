@@ -1,0 +1,27 @@
+wsl --unregister nixos
+wsl --install  --from-file .\Downloads\nixos.wsl
+sudo cp /mnt/c/workspace/ca-certificates.crt /etc/nixos/
+
+# nano /etc/nixos/configuration.nix
+cat << EOF > /etc/nixos/configuration.nix
+//
+{
+  security.pki.certificateFiles = [ 
+    ./ca-certificates.crt
+  ];
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  environment.systemPackages = with pkgs; [ git neovim ];
+}
+EOF
+
+NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt nixos-rebuild switch
+
+wsl -t NixOS
+
+
+
+# Cert file should be in /etc/nixos for the first flake build 
+NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt nixos-rebuild boot --flake .#AT-L-PF5S785B
+
+environment.systemPackages = with pkgs; [ git ];
