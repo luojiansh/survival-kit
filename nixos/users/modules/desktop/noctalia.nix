@@ -153,13 +153,13 @@
           directory = "/home/${username}/Pictures/Wallpapers";
           monitorDirectories = [ ];
           enableMultiMonitorDirectories = false;
-          recursiveSearch = false;
+          recursiveSearch = true;
           setWallpaperOnAllMonitors = true;
           fillMode = "crop";
           fillColor = "#000000";
           useSolidColor = false;
           solidColor = "#1a1a2e";
-          randomEnabled = false;
+          randomEnabled = true;
           wallpaperChangeMode = "random";
           randomIntervalSec = 300;
           transitionDuration = 1500;
@@ -176,7 +176,7 @@
           wallhavenRatios = "";
           wallhavenApiKey = "";
           wallhavenResolutionMode = "atleast";
-          wallhavenResolutionWidth = "";
+          wallhavenResolutionWidth = "3840";
           wallhavenResolutionHeight = "";
         };
         appLauncher = {

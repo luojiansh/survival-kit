@@ -123,7 +123,7 @@
     enable = true;
     timeouts = [
       {
-        timeout = 30; # 5 minutes of inactivity
+        timeout = 300; # 5 minutes of inactivity
         command = "${pkgs.niri}/bin/niri msg action power-off-monitors"; # Turn off monitors
       }
       {
@@ -135,11 +135,11 @@
     ];
   };
 
-  services.wlsunset = {
-    enable = true;
-    sunrise = "06:00";
-    sunset = "18:00";
-  };
+  # services.wlsunset = {
+  #   enable = true;
+  #   sunrise = "06:00";
+  #   sunset = "18:00";
+  # };
 
   fonts.fontconfig.enable = true;
 }
