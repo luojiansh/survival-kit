@@ -6,7 +6,7 @@
 }:
 
 {
-  networking.hostName = "${hostname}"; # Define your hostname.
+  networking.hostName = pkgs.lib.mkForce "${hostname}"; # Define your hostname.
 
   #services.envfs.enable = true;
 

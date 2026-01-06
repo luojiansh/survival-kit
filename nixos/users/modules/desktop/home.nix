@@ -83,4 +83,16 @@
       alpha-blending = "native"; # (or linear-corrected)
     };
   };
+
+  programs.swaylock = {
+    enable = true;
+  };
+
+  services.swayidle = {
+    enable = true;
+  };
+
+  services.kanshi = {
+    enable = true;
+  };
 }
