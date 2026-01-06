@@ -394,6 +394,7 @@ binds {
     Mod+F9 hotkey-overlay-title="Open a File Manager: " { spawn "dolphin"; }
     Mod+F11 hotkey-overlay-title="Run an Application: " { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
     Mod+Alt+L hotkey-overlay-title="Lock the Screen: " { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "lockAndSuspend"; }
+    Mod+F3 hotkey-overlay-title="Search nixpkgs: " { spawn-sh "pkg=$(fuzzel --dmenu --placeholder \"Enter nix package name...\"); ghostty -e sh -ic \"nix search nixpkgs $pkg; read -s -n1\""; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
@@ -648,5 +649,5 @@ binds {
 
     // Powers off the monitors. To turn them back on, do any input like
     // moving the mouse or pressing any other key.
-    //Mod+Shift+P { power-off-monitors; }
+    Mod+Shift+P { power-off-monitors; }
 }

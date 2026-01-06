@@ -180,7 +180,7 @@
           wallhavenResolutionHeight = "";
         };
         appLauncher = {
-          enableClipboardHistory = false;
+          enableClipboardHistory = true;
           enableClipPreview = true;
           position = "center";
           pinnedExecs = [ ];

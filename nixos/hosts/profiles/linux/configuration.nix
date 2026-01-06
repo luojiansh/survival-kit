@@ -34,25 +34,6 @@
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
     niri
-    google-chrome
-  ];
-
-  fonts.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
-    nerd-fonts.fira-code
-    nerd-fonts.symbols-only
-    nerd-fonts.sauce-code-pro
-    nerd-fonts.caskaydia-mono
-    nerd-fonts.blex-mono
-    nerd-fonts.droid-sans-mono
-    nerd-fonts.ubuntu
-    nerd-fonts.go-mono
-    nerd-fonts.monaspace
-    nerd-fonts.caskaydia-cove
-    nerd-fonts.intone-mono
-    nerd-fonts.open-dyslexic
-    nerd-fonts.noto
-    nerd-fonts.hack
   ];
 
   # Niri
