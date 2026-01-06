@@ -58,4 +58,9 @@
   # Niri
   programs.niri.enable = true;
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
+
+  programs.gpu-screen-recorder = {
+    enable = true;
+  };
+
 }

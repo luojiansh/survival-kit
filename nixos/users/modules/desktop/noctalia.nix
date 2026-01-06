@@ -1,4 +1,8 @@
 {
+  username,
+  ...
+}:
+{
     programs.noctalia-shell = {
       enable = true;
       settings = {
@@ -146,7 +150,7 @@
         wallpaper = {
           enabled = true;
           overviewEnabled = false;
-          directory = "";
+          directory = "/home/${username}/Pictures/Wallpapers";
           monitorDirectories = [ ];
           enableMultiMonitorDirectories = false;
           recursiveSearch = false;

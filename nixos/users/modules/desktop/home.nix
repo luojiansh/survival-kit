@@ -35,7 +35,10 @@
     xwayland-satellite # xwayland support
 
     # Quickshell
-    inputs.quickshell.packages.${stdenv.targetPlatform.system}.default
+    # inputs.quickshell.packages.${stdenv.targetPlatform.system}.default
+    # brightnessctl
+    #xdg-desktop-portal-hyprland
+    ddcutil
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -72,7 +75,15 @@
   # Niri
   xdg.configFile."niri/config.kdl".source = ./config.kdl;
 
+  programs.quickshell = {
+    enable = true;
+  };
+
   programs.noctalia-shell = {
+    enable = true;
+  };
+
+  programs.cava = {
     enable = true;
   };
 
@@ -84,7 +95,7 @@
     };
   };
 
-  programs.swaylock = {
+  services.cliphist = {
     enable = true;
   };
 
@@ -92,7 +103,9 @@
     enable = true;
   };
 
-  services.kanshi = {
+  services.wlsunset = {
     enable = true;
+    sunrise = "06:00";
+    sunset = "18:00";
   };
 }
