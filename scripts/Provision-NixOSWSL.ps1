@@ -30,7 +30,7 @@ param(
   [Parameter()] [string] $CertPath = "C:\workspace\ca-certificates.crt",
   [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
-  [Parameter()] [string] $GeneratorUser = "luoj",
+  [Parameter()] [string] $WslUser = "luoj",
   [Parameter()] [string] $NixOSHostname = "AT-L-PF5S785B",
   [Parameter()] [switch] $SkipInstall,
   [Parameter()] [switch] $SkipCerts,
@@ -61,6 +61,10 @@ if (-not (Test-WslInstalled)) {
   throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
 }
 
+# ============================================================================
+# Installation Phase
+# ============================================================================
+
 if (-not $SkipInstall) {
   $installed = Install-WslDistro `
     -DistroName $DistroName `
@@ -77,8 +81,9 @@ else {
   ThrowIf { -not $exists } "Distro '$DistroName' does not exist. Remove -SkipInstall to create it."
 }
 
-
-$NixBuildEnv = ""
+# ============================================================================
+# Certificate Phase
+# ============================================================================
 
 if (-not $SkipCerts) {
   # Generate or locate CA certificate bundle
@@ -148,6 +153,10 @@ if (-not $SkipCerts) {
 Write-Step "Running initial nixos-rebuild switch with NIX_SSL_CERT_FILE"
 Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild switch" -workingDirWsl '/' -user 'root'
 
+# ============================================================================
+# Nix setup phase
+# ============================================================================
+
 if ($RepoPathWindows) {
   ThrowIf { -not (Test-Path -LiteralPath $RepoPathWindows) } "Repo path not found: $RepoPathWindows"
   
@@ -165,7 +174,16 @@ if ($RepoPathWindows) {
   # Run flake boot from the WSL copy
   Write-Step "Running flake boot from WSL repo for host '$NixOSHostname'"
   Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild boot --flake '$repoWslDest#$NixOSHostname'" -workingDirWsl $repoWslDest -user 'root'
+
+  # Run home-manager build from the WSL copy
+  Write-Step "Running home-manager build from WSL repo for $WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nix build '$repoWslDest#homeConfigurations.$WslUser.activationPackage'" -workingDirWsl $repoWslDest -user "$WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv $repoWslDest/result/activate" -workingDirWsl $wslUserHome -user "$WslUser"
 }
+
+# ============================================================================
+# Cleanup and Launch
+# ============================================================================
 
 Write-Step "Terminating distro to ensure a clean state"
 Write-Info "Waiting 10 seconds before terminating..."

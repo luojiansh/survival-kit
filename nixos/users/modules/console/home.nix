@@ -94,7 +94,19 @@
   programs.home-manager.enable = true;
 
   # Bash
-  programs.bash.enable = true;
+  programs.bash = {
+    enable = true;
+    bashrcExtra = "
+if [ -f ~/.bashrc.dist ]; then
+    . ~/.bashrc.dist
+fi
+";
+    profileExtra = "
+if [ -f ~/.profile.dist ]; then
+    . ~/.profile.dist
+fi
+";
+  };
 
   programs.readline = {
     enable = true;
