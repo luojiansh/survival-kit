@@ -127,6 +127,11 @@
           username = "jian";
           system = "x86_64-linux";
         };
+        windy = mkHost {
+          hostname = "windy";
+          username = "jian";
+          system = "x86_64-linux";
+        };
       };
     };
 }

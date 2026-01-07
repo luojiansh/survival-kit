@@ -11,7 +11,6 @@
     ./noctalia.nix
   ];
 
-  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
@@ -39,7 +38,7 @@
     # inputs.quickshell.packages.${stdenv.targetPlatform.system}.default
     # brightnessctl
     #xdg-desktop-portal-hyprland
-    ddcutil
+    #ddcutil
 
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
