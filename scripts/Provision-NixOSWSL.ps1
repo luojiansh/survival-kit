@@ -41,111 +41,40 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-function Write-Step($m) { Write-Host "==> $m" -ForegroundColor Cyan }
-function Write-Info($m) { Write-Host "[i] $m" -ForegroundColor DarkCyan }
-function Write-Warn($m) { Write-Warning $m }
-function ThrowIf([scriptblock]$cond, [string]$msg) { if (& $cond) { throw $msg } }
-
-function Test-WslInstalled {
-  return [bool](Get-Command wsl.exe -ErrorAction SilentlyContinue)
+# Import common functions
+$scriptDir = Split-Path -Parent $PSCommandPath
+$commonModule = Join-Path $scriptDir 'WSL-Common.ps1'
+if (-not (Test-Path $commonModule)) {
+    throw "Required module not found: $commonModule"
 }
-
-function Get-RegisteredDistros {
-  $lines = & wsl.exe -l -q 2>$null | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-  return $lines
-}
-
-function Convert-ToWslPath([string]$WindowsPath) {
-  $escapedInputPath = $WindowsPath -replace '\\', '\\'
-  return wsl wslpath -u "$escapedInputPath"
-}
-
-function Convert-ToWindowsPath([string]$WslPath) {
-  return wsl -d $DistroName wslpath -w "$WslPath"
-}
-
-function Invoke-Wsl([string]$distro, [string]$command, [string]$workingDirWsl, [string]$user) {
-  $wslArgs = @()
-  if ($distro) { $wslArgs += @('-d', $distro) }
-  if ($user) { $wslArgs += @('--user', $user) }
-  if ($workingDirWsl) { $wslArgs += @('--cd', $workingDirWsl) }
-  $wslArgs += '--'
-  $wslArgs += 'sh'
-  $wslArgs += '-lc'
-  $wslArgs += $command
-  Write-Info "wsl $($wslArgs -join ' ')"
-  & wsl.exe @wslArgs
-  if ($LASTEXITCODE -ne 0) {
-    throw "WSL command failed with exit code ${LASTEXITCODE}: $command"
-  }
-}
-
-function Copy-CertToRepo([string]$sourceCert, [string]$repoPath, [string]$hostname) {
-  if ($repoPath) {
-    $hostCertPath = Join-Path $repoPath "hosts\$hostname\ca-certificates.crt"
-    $hostCertDir = Split-Path -Parent $hostCertPath
-    if (-not (Test-Path $hostCertDir)) {
-      New-Item -Path $hostCertDir -ItemType Directory -Force | Out-Null
-    }
-    Copy-Item -LiteralPath $sourceCert -Destination $hostCertPath -Force
-    Write-Info "Copied certificate to repo at $hostCertPath"
-  }
-}
+. $commonModule
 
 # Resolve default path to the cert generator
 if (-not $CertGeneratorPath) {
-  $scriptDir = Split-Path -Parent $PSCommandPath
   $CertGeneratorPath = Join-Path $scriptDir 'Windows_to_WSL_Certs.ps1'
 }
 
-# Auto-detect repo path (script is in <repo>/scripts/, nixos flake is in <repo>/nixos/)
-$scriptDir = Split-Path -Parent $PSCommandPath
-$repoRoot = Split-Path -Parent $scriptDir
-$RepoPathWindows = Join-Path $repoRoot 'nixos'
-
-if (-not (Test-Path $RepoPathWindows)) {
-  Write-Warn "Repo nixos directory not found at $RepoPathWindows - repo cert copy and flake boot will be skipped"
-  $RepoPathWindows = $null
-}
-else {
-  Write-Info "Using repo path: $RepoPathWindows"
-}
+# Auto-detect repo path using common function
+$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
 
 if (-not (Test-WslInstalled)) {
   throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
 }
 
-$distros = Get-RegisteredDistros
-$exists = $distros -contains $DistroName
-
 if (-not $SkipInstall) {
-  if ($exists) {
-    if ($ForceUnregister) {
-      Write-Step "Unregistering existing distro '$DistroName'"
-      & wsl.exe --unregister "$DistroName"
-      $exists = $false
-    }
-    else {
-      Write-Warn "Distro '$DistroName' already exists. Use -ForceUnregister to recreate or -SkipInstall to keep."
-    }
+  $installed = Install-WslDistro `
+    -DistroName $DistroName `
+    -ImagePath $NixOSWslFile `
+    -ForceUnregister $ForceUnregister
+  
+  if (-not $installed) {
+    Write-Step "Skipping installation (distro already exists)"
   }
-
-  if (-not $exists) {
-    ThrowIf { -not (Test-Path -LiteralPath $NixOSWslFile) } "NixOS WSL file not found: $NixOSWslFile"
-    Write-Step "Installing NixOS-WSL from file"
-    try {
-      & wsl.exe --install --no-launch --from-file "$NixOSWslFile" --name "$DistroName" | Write-Output
-    }
-    catch {
-      Write-Warn "'wsl --install --from-file' failed. If your WSL doesn't support it, manually import the distro and rerun with -SkipInstall."
-      throw
-    }
-    # Refresh distro list
-    Start-Sleep -Seconds 2
-    $distros = Get-RegisteredDistros
-    $exists = $distros -contains $DistroName
-    ThrowIf { -not $exists } "Expected distro '$DistroName' to be installed, but it is not registered."
-  }
+}
+else {
+  # Verify distro exists when skipping install
+  $exists = Test-DistroExists -DistroName $DistroName
+  ThrowIf { -not $exists } "Distro '$DistroName' does not exist. Remove -SkipInstall to create it."
 }
 
 
@@ -154,14 +83,17 @@ $NixBuildEnv = ""
 if (-not $SkipCerts) {
   # Generate or locate CA certificate bundle
   $nixosOutputPath = "/etc/nixos/ca-certificates.crt"
-  $etcNixosCertWindows = Convert-ToWindowsPath $nixosOutputPath
+  $etcNixosCertWindows = Convert-ToWindowsPath -WslPath $nixosOutputPath -DistroName $DistroName
 
-  ThrowIf { -not (Test-Path -LiteralPath $CertGeneratorPath) } "Cert generator not found: $CertGeneratorPath"
-
-  # Use Windows_to_WSL_Certs to generate and copy certificates
-  & powershell.exe -ExecutionPolicy Bypass -File $CertGeneratorPath `
-    -Distro $DistroName -User root -InputPath "$CertPath" `
-    -OutputPath $nixosOutputPath @Companies
+  Write-Step "Installing certificates to NixOS"
+  
+  Install-CertsToWSL `
+    -DistroName $DistroName `
+    -CertGeneratorPath $CertGeneratorPath `
+    -CertPath $CertPath `
+    -OutputPath $nixosOutputPath `
+    -Companies $Companies `
+    -User 'root'
 
   # Copy to repo if available (read from WSL filesystem)
   if (Test-Path $etcNixosCertWindows) {
@@ -239,7 +171,7 @@ Write-Step "Terminating distro to ensure a clean state"
 Write-Info "Waiting 10 seconds before terminating..."
 Start-Sleep -Seconds 10
 
-& wsl.exe -t "$DistroName" 2>$null | Out-Null
+Stop-WslDistro -DistroName $DistroName
 Start-Sleep -Seconds 5
 
 # Try to start and exit as root - ignore failures as systemd may not be ready
@@ -250,12 +182,12 @@ catch {
   Write-Info "Ignoring systemd session error (expected)"
 }
 
-& wsl.exe -t "$DistroName" 2>$null | Out-Null
+Stop-WslDistro -DistroName $DistroName
 Write-Info "Waiting 5 seconds after final termination..."
 Start-Sleep -Seconds 5
 
 Write-Step "Shutting down WSL to finalize changes"
-& wsl.exe --shutdown
+Stop-AllWsl
 
 Write-Step "Done. NixOS-WSL base provisioning completed."
 
