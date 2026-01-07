@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+staged_files() {
+  git diff --cached --name-only --diff-filter=ACM
+}
+
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+run_nixfmt() {
+  local file="$1"
+  if have_cmd nixfmt; then
+    nixfmt "$file"
+    git add "$file"
+  else
+    echo "pre-commit: nixfmt not found; skipping $file" >&2
+  fi
+}
+
+run_ps_analyzer() {
+  local file="$1"
+  local pwsh_cmd=""
+
+  if have_cmd pwsh; then
+    pwsh_cmd="pwsh"
+  elif have_cmd powershell; then
+    pwsh_cmd="powershell"
+  else
+    echo "pre-commit: pwsh/powershell not found; skipping $file" >&2
+    return 0
+  fi
+
+  "$pwsh_cmd" -NoProfile -Command \
+    "if (Get-Command Invoke-ScriptAnalyzer -ErrorAction SilentlyContinue) { Invoke-ScriptAnalyzer -Path '$file' -Severity Error } else { Write-Host 'Invoke-ScriptAnalyzer not found; skipping $file' }"
+}
+
+failed=0
+
+while IFS= read -r file; do
+  case "$file" in
+    *.nix)
+      run_nixfmt "$file" || failed=1
+      ;;
+    *.ps1)
+      run_ps_analyzer "$file" || failed=1
+      ;;
+  esac
+done < <(staged_files)
+
+exit "$failed"
