@@ -14,13 +14,13 @@ Notes
 
 Examples
   # Basic install using pre-made cert file
-  .\Provision-UbuntuWSL.ps1 -UbuntuImagePath "$env:USERPROFILE\Downloads\ubuntu-22.04.tar.gz" `
+  .\Provision-UbuntuWSL.ps1 -Image "$env:USERPROFILE\Downloads\ubuntu-22.04.tar.gz" `
     -CertPath "C:\workspace\ca-certificates.crt" `
     -DistroName "Ubuntu-22.04"
 
   # Generate certs from Windows store for issuers/subjects containing strings
   .\Provision-UbuntuWSL.ps1 -Companies "Company1","Company2" `
-    -UbuntuImagePath "$env:USERPROFILE\Downloads\ubuntu-22.04.tar.gz" `
+    -Image "Ubuntu-22.04" `
     -DistroName "Ubuntu-22.04"
 
   # Skip installation if distro already exists
@@ -29,8 +29,8 @@ Examples
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
-  [Parameter()] [string] $DistroName = "Ubuntu-22.04",
-  [Parameter()] [string] $UbuntuImagePath = "$env:USERPROFILE\Downloads\ubuntu-22.04.tar.gz",
+  [Parameter()] [string] $DistroName = "Ubuntu",
+  [Parameter()] [string] $Image = "Ubuntu",
   [Parameter()] [string] $CertPath = "C:\workspace\ca-certificates.crt",
   [Parameter()] [string] $CertOutputPath = "/usr/local/share/ca-certificates/corp-ca-certificates.crt",
   [Parameter()] [string[]] $Companies,
@@ -38,10 +38,12 @@ param(
   [Parameter()] [string] $UbuntuUser = "root",
   [Parameter()] [switch] $SkipInstall,
   [Parameter()] [switch] $SkipCerts,
-  [Parameter()] [switch] $UpdateCaCertificates,
   [Parameter()] [switch] $ForceUnregister,
   [Parameter()] [bool] $LaunchAfterProvision = $true
 )
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
 
 # Import common functions
 $scriptDir = Split-Path -Parent $PSCommandPath
@@ -53,12 +55,14 @@ if (-not (Test-Path $commonModule)) {
 
 # Resolve default path to the cert generator
 if (-not $CertGeneratorPath) {
-    $CertGeneratorPath = Join-Path $scriptDir 'Windows_to_WSL_Certs.ps1'
+  $CertGeneratorPath = Join-Path $scriptDir 'Windows_to_WSL_Certs.ps1'
 }
 
-# Validate WSL
+# Auto-detect repo path using common function
+$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
+
 if (-not (Test-WslInstalled)) {
-    throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
+  throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
 }
 
 # ============================================================================
@@ -66,20 +70,19 @@ if (-not (Test-WslInstalled)) {
 # ============================================================================
 
 if (-not $SkipInstall) {
-    $installed = Install-WslDistro `
-        -DistroName $DistroName `
-        -ImagePath $UbuntuImagePath `
-        -ForceUnregister $ForceUnregister
-    
-    if (-not $installed) {
-        Write-Step "Skipping installation (distro already exists)"
-    }
+  $installed = Install-WslDistro `
+    -DistroName $DistroName `
+    -Image $Image `
+    -ForceUnregister $ForceUnregister
+  
+  if (-not $installed) {
+    Write-Step "Skipping installation (distro already exists)"
+  }
 }
 else {
-    # Verify distro exists when skipping install
-    $exists = Test-DistroExists -DistroName $DistroName
-    ThrowIf { -not $exists } "Distro '$DistroName' does not exist. Remove -SkipInstall to create it."
-    Write-Step "Skipping installation phase (distro already exists)"
+  # Verify distro exists when skipping install
+  $exists = Test-DistroExists -DistroName $DistroName
+  ThrowIf { -not $exists } "Distro '$DistroName' does not exist. Remove -SkipInstall to create it."
 }
 
 # ============================================================================
@@ -87,7 +90,7 @@ else {
 # ============================================================================
 
 if (-not $SkipCerts) {
-    Write-Step "Installing certificates to Ubuntu"
+    Write-Step "Installing certificates to $DistroName"
     
     Install-CertsToWSL `
         -DistroName $DistroName `
@@ -95,14 +98,13 @@ if (-not $SkipCerts) {
         -CertPath $CertPath `
         -OutputPath $CertOutputPath `
         -Companies $Companies `
-        -User $UbuntuUser
+        -User 'root'
     
     Write-Step "Verifying certificate in $CertOutputPath"
     Invoke-Wsl -distro $DistroName -command "ls -lh '$CertOutputPath'" -workingDirWsl '/' -user $UbuntuUser
     
-    # Update CA certificates if requested (Ubuntu-specific)
-    if ($UpdateCaCertificates) {
-        Write-Step "Updating CA certificates in Ubuntu"
+    # Update CA certificates
+        Write-Step "Updating CA certificates in $DistroName"
         try {
             Invoke-Wsl -distro $DistroName -command "update-ca-certificates" -workingDirWsl '/' -user 'root'
             Write-Info "CA certificates updated successfully"
@@ -110,7 +112,6 @@ if (-not $SkipCerts) {
         catch {
             Write-Warn "Failed to run update-ca-certificates. You may need to run it manually."
         }
-    }
 }
 else {
     Write-Step "Skipping certificate installation"
