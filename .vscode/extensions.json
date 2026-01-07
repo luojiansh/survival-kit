@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "bbenoist.nix",
+    "ms-vscode.powershell",
+    "editorconfig.editorconfig",
+  ]
+}
