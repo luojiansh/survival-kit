@@ -1,6 +1,6 @@
 {
   "recommendations": [
-    "bbenoist.nix",
+    "jnoortheen.nix-ide",
     "ms-vscode.powershell",
     "editorconfig.editorconfig",
   ]

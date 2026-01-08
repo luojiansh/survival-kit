@@ -12,6 +12,7 @@
       name = "Jian Luo";
       email = "jian.luo@at.abb.com";
     };
+    init.defaultBranch = "main";
   };
 
   # This value determines the Home Manager release that your configuration is

@@ -8,10 +8,13 @@
   home.homeDirectory = "/home/jian";
 
   # Git account
-  programs.git.settings = {
-    user = {
-      name = "Jian Luo";
-      email = "jian.luo.cn@gmail.com";
+  programs.git = {
+    settings = {
+      user = {
+        name = "Jian Luo";
+        email = "jian.luo.cn@gmail.com";
+      };
+      init.defaultBranch = "main";
     };
   };
 
