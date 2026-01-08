@@ -33,7 +33,8 @@ param(
   [Parameter()] [string] $Image = "Ubuntu",
   [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
-  [Parameter()] [string] $WslUser = "luoj",
+  [Parameter()] [string] $WslUser = "$env:USERNAME".ToLower(),
+  [Parameter()] [string] $NixOSHostname = (hostname),
   [Parameter()] [switch] $SkipInstall,
   [Parameter()] [switch] $SkipCerts,
   [Parameter()] [switch] $SkipNixInstall,
@@ -52,13 +53,21 @@ if (-not (Test-Path $commonModule)) {
 }
 . $commonModule
 
+
+# Auto-detect repo path using common function
+$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
+
+# Import host specific settings
+if (Test-Path "$RepoPathWindows\hosts\$NixOSHostname\Provision.ps1") {
+  . "$RepoPathWindows\hosts\$NixOSHostname\Provision.ps1"
+} else {
+  Write-Info "Host specific Provision.ps1 not found for hostname '$NixOSHostname'"
+}
+
 # Resolve default path to the cert generator
 if (-not $CertGeneratorPath) {
   $CertGeneratorPath = Join-Path $scriptDir 'get-all-certs.sh'
 }
-
-# Auto-detect repo path using common function
-$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
 
 if (-not (Test-WslInstalled)) {
   throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
@@ -76,6 +85,14 @@ if (-not $SkipInstall) {
   
   if (-not $installed) {
     Write-Step "Skipping installation (distro already exists)"
+  }
+
+  if ($Image -like "*Debian*") {
+    # Debian specific
+    Invoke-Wsl -d $DistroName -command "apt-get update && apt-get install -y curl xz-utils binfmt-support" -workingDirWsl '/' -user 'root'
+    Invoke-Wsl -d $DistroName -command "mkdir -p /usr/lib/binfmt.d" -workingDirWsl '/' -user 'root'
+    Invoke-Wsl -d $DistroName -command "echo ':WSLInterop:M::MZ::/init:PF' > /usr/lib/binfmt.d/WSLInterop.conf" -workingDirWsl '/' -user 'root'
+    Invoke-Wsl -d $DistroName -command "systemctl restart systemd-binfmt" -workingDirWsl '/' -user 'root'
   }
 }
 else {
@@ -161,10 +178,6 @@ if ($RepoPathWindows) {
 Write-Step "Terminating distro to ensure a clean state"
 Stop-WslDistro -DistroName $DistroName
 Start-Sleep -Seconds 2
-
-# Write-Step "Shutting down WSL to finalize changes"
-# Stop-AllWsl
-# Start-Sleep -Seconds 2
 
 Write-Step "Done. WSL provisioning completed."
 

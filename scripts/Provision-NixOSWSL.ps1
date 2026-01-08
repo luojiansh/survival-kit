@@ -11,29 +11,30 @@ Notes
 
 Examples
   # Basic install using pre-made cert file
-  .\Provision-NixOSWSL.ps1 -NixOSWslFile "$env:USERPROFILE\Downloads\nixos.wsl" `
+  .\Provision-NixOSWSL.ps1 -Image "$env:USERPROFILE\Downloads\nixos.wsl" `
     -CertPath "C:\\workspace\\ca-certificates.crt" `
     -DistroName "NixOS"
 
   # Generate certs from Windows store for issuers/subjects containing strings
   .\Provision-NixOSWSL.ps1 -Companies "Company1","Company2" `
-    -NixOSWslFile "$env:USERPROFILE\Downloads\nixos.wsl" -DistroName "NixOS"
+    -Image "$env:USERPROFILE\Downloads\nixos.wsl" -DistroName "NixOS"
 
   # With flake boot from auto-detected repo
-  .\Provision-NixOSWSL.ps1 -Companies "Company1" -NixOSHostname "AT-L-PF5S785B"
+  .\Provision-NixOSWSL.ps1 -Companies "Company1"
 !#>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
   [Parameter()] [string] $DistroName = "NixOS",
-  [Parameter()] [string] $NixOSWslFile = "$env:USERPROFILE\Downloads\nixos.wsl",
+  [Parameter()] [string] $Image = "$env:USERPROFILE\Downloads\nixos.wsl",
   [Parameter()] [string] $CertPath = "C:\workspace\ca-certificates.crt",
   [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
-  [Parameter()] [string] $WslUser = "luoj",
-  [Parameter()] [string] $NixOSHostname = "AT-L-PF5S785B",
+  [Parameter()] [string] $WslUser = "$env:USERNAME".ToLower(),
+  [Parameter()] [string] $NixOSHostname = (hostname),
   [Parameter()] [switch] $SkipInstall,
   [Parameter()] [switch] $SkipCerts,
+  [Parameter()] [switch] $SkipNixInstall,
   [Parameter()] [switch] $ForceUnregister,
   [Parameter()] [bool] $LaunchAfterProvision = $true
 )
@@ -45,17 +46,25 @@ Set-StrictMode -Version Latest
 $scriptDir = Split-Path -Parent $PSCommandPath
 $commonModule = Join-Path $scriptDir 'WSL-Common.ps1'
 if (-not (Test-Path $commonModule)) {
-    throw "Required module not found: $commonModule"
+  throw "Required module not found: $commonModule"
 }
 . $commonModule
+
+# Auto-detect repo path using common function
+$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
+
+# Import host specific settings
+if (Test-Path "$RepoPathWindows\hosts\$NixOSHostname\Provision.ps1") {
+  . "$RepoPathWindows\hosts\$NixOSHostname\Provision.ps1"
+}
+else {
+  Write-Info "Host specific Provision.ps1 not found for hostname '$NixOSHostname'"
+}
 
 # Resolve default path to the cert generator
 if (-not $CertGeneratorPath) {
   $CertGeneratorPath = Join-Path $scriptDir 'Windows_to_WSL_Certs.ps1'
 }
-
-# Auto-detect repo path using common function
-$RepoPathWindows = Get-RepoNixosPath -ScriptPath $PSCommandPath
 
 if (-not (Test-WslInstalled)) {
   throw "wsl.exe not found. Please install Windows Subsystem for Linux and reboot."
@@ -68,7 +77,7 @@ if (-not (Test-WslInstalled)) {
 if (-not $SkipInstall) {
   $installed = Install-WslDistro `
     -DistroName $DistroName `
-    -Image $NixOSWslFile `
+    -Image $Image `
     -ForceUnregister $ForceUnregister
   
   if (-not $installed) {
@@ -149,19 +158,23 @@ if (-not $SkipCerts) {
   }
   $NixBuildEnv = "NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt"
 }
-
-Write-Step "Running initial nixos-rebuild switch with NIX_SSL_CERT_FILE"
-Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild switch" -workingDirWsl '/' -user 'root'
+else {
+  $NixBuildEnv = ""
+  Write-Step "Skipping certificate installation"
+}
 
 # ============================================================================
 # Nix setup phase
 # ============================================================================
 
-if ($RepoPathWindows) {
+$repoWslDest = "/tmp/nixos-provision"
+if (-not $SkipNixInstall) {
   ThrowIf { -not (Test-Path -LiteralPath $RepoPathWindows) } "Repo path not found: $RepoPathWindows"
+
+  Write-Step "Running initial nixos-rebuild switch with NIX_SSL_CERT_FILE"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild switch" -workingDirWsl '/' -user 'root'
   
   # Copy repo to WSL temp directory
-  $repoWslDest = "/tmp/nixos-provision"
   Write-Step "Copying repo to WSL at $repoWslDest"
   
   # Convert Windows path to WSL path for source
@@ -174,11 +187,6 @@ if ($RepoPathWindows) {
   # Run flake boot from the WSL copy
   Write-Step "Running flake boot from WSL repo for host '$NixOSHostname'"
   Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild boot --flake '$repoWslDest#$NixOSHostname'" -workingDirWsl $repoWslDest -user 'root'
-
-  # Run home-manager build from the WSL copy
-  Write-Step "Running home-manager build from WSL repo for $WslUser"
-  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nix build '$repoWslDest#homeConfigurations.$WslUser.activationPackage'" -workingDirWsl $repoWslDest -user "$WslUser"
-  Invoke-Wsl -d $DistroName -command "$NixBuildEnv $repoWslDest/result/activate" -workingDirWsl $wslUserHome -user "$WslUser"
 }
 
 # ============================================================================
@@ -186,11 +194,9 @@ if ($RepoPathWindows) {
 # ============================================================================
 
 Write-Step "Terminating distro to ensure a clean state"
-Write-Info "Waiting 10 seconds before terminating..."
-Start-Sleep -Seconds 10
 
 Stop-WslDistro -DistroName $DistroName
-Start-Sleep -Seconds 5
+Start-Sleep -Seconds 2
 
 # Try to start and exit as root - ignore failures as systemd may not be ready
 try {
@@ -209,6 +215,31 @@ Stop-AllWsl
 
 Write-Step "Done. NixOS-WSL base provisioning completed."
 
+# ============================================================================
+# Home-Manager Phase
+# ============================================================================
+if ($RepoPathWindows) {
+  ThrowIf { -not (Test-Path -LiteralPath $RepoPathWindows) } "Repo path not found: $RepoPathWindows"
+  $wslUserHome = "/home/$WslUser"
+  $windowsUserHome = Convert-ToWindowsPath -WslPath $wslUserHome -DistroName $DistroName
+  if (-not (Test-Path -LiteralPath $windowsUserHome)) {
+    # Ensure user home exists by launching WSL as that user
+    Write-Info "Launching WSL to initialize home directory for user $WslUser"
+    wsl.exe -d "$DistroName"
+  }
+  else {
+    Write-Info "User home directory should already exist at $wslUserHome"
+  }
+  # Run home-manager build from the WSL copy
+  Write-Step "Running home-manager build from WSL repo for $WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nix build '$repoWslDest#homeConfigurations.$WslUser.activationPackage'" -workingDirWsl $repoWslDest -user "$WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv $repoWslDest/result/activate" -workingDirWsl $wslUserHome -user "$WslUser"
+
+}
+
+# ============================================================================
+# Launch Phase
+# ============================================================================
 if ($LaunchAfterProvision) {
   Write-Info "Waiting 5 seconds before launching..."
   Start-Sleep -Seconds 5
