@@ -289,6 +289,7 @@ layout {
 
 // noctalia-shell
 spawn-sh-at-startup "QT_QPA_PLATFORMTHEME=gtk3 noctalia-shell"
+spawn-sh-at-startup "fcitx5 -d"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.

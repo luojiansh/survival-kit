@@ -111,4 +111,31 @@
   # Pin to the NixOS release that first installed these hosts.
   # See: https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   system.stateVersion = "26.05";
+
+  i18n.inputMethod = {
+    enable = true;
+    type = "fcitx5";
+    fcitx5 = {
+      waylandFrontend = true;
+      ignoreUserConfig = true;
+      addons = with pkgs; [
+        rime-data
+        fcitx5-rime
+        fcitx5-gtk
+        qt6Packages.fcitx5-chinese-addons
+        fcitx5-nord
+      ];
+      settings.inputMethod = {
+        GroupOrder."0" = "Default";
+        "Groups/0" = {
+          Name = "Default";
+          "Default Layout" = "us";
+          DefaultIM = "pinyin";
+        };
+        "Groups/0/Items/0".Name = "keyboard-us";
+        "Groups/0/Items/1".Name = "pinyin";
+
+      };
+    };
+  };
 }
