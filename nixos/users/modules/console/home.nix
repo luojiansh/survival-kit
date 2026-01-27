@@ -48,7 +48,7 @@
 
     # Python
     #python313
-    python313Packages.uv
+    python314Packages.uv
 
     # Node.js
     nodejs
