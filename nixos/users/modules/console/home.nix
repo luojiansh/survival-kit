@@ -145,7 +145,7 @@ fi
     viAlias = true;
     plugins = with pkgs; [
       vimPlugins.nvim-treesitter.withAllGrammars
-      vimPlugins.opencode-nvim
+      #vimPlugins.opencode-nvim
     ];
     extraPackages = with pkgs; [
       tree-sitter
