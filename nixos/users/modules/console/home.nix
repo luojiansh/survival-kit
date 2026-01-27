@@ -42,9 +42,9 @@
     vimPlugins.opencode-nvim
 
     # Agent
-    opencode
-    claude-code
-    codex
+    #opencode
+    #claude-code
+    #codex
 
     # Python
     #python313

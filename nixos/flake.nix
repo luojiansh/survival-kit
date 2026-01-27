@@ -3,10 +3,10 @@
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs.
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
@@ -59,15 +59,15 @@
             ./hosts/${hostname}/nixos.nix
             ./users/${username}/nixos.nix
 
-          #   home-manager.nixosModules.home-manager
-          #   {
-          #     home-manager.useGlobalPkgs = true;
-          #     home-manager.useUserPackages = true;
-          #     home-manager.backupFileExtension = "bak";
-          #
-          #     home-manager.extraSpecialArgs = { inherit username inputs; };
-          #     home-manager.users.${username} = import ./users/user.nix;
-          #   }
+            #   home-manager.nixosModules.home-manager
+            #   {
+            #     home-manager.useGlobalPkgs = true;
+            #     home-manager.useUserPackages = true;
+            #     home-manager.backupFileExtension = "bak";
+            #
+            #     home-manager.extraSpecialArgs = { inherit username inputs; };
+            #     home-manager.users.${username} = import ./users/user.nix;
+            #   }
           ];
         };
 
@@ -80,9 +80,9 @@
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
         users = [
-          "jian"  # Linux user
+          "jian" # Linux user
           "jianl" # WSL user
-          "luoj"  # Company laptop user
+          "luoj" # Company laptop user
         ];
         homeConfig =
           username:
@@ -110,7 +110,7 @@
         };
       }
     )
-      # Host configuration
+    # Host configuration
     // {
       nixosConfigurations = {
         "AT-L-PF5S785B" = mkHost {

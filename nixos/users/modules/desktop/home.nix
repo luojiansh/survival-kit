@@ -55,8 +55,11 @@
     nerd-fonts.open-dyslexic
     nerd-fonts.noto
     nerd-fonts.hack
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
 
-    google-chrome
+    #google-chrome
 
   ];
 

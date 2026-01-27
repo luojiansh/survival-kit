@@ -1,3 +1,2 @@
 {
-  wsl.defaultUser = "luoj";
 }
