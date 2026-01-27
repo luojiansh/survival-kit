@@ -1,14 +1,14 @@
 #requires -Version 5.0
 <#!
-Provision Ubuntu WSL with installation and certificate copy.
+Provision Ubuntu / Debian WSL with installation and certificate copy.
 
 This script:
 - Installs Ubuntu WSL from a tarball/image
-- Copies certificates from Windows to Ubuntu
-- Does NOT perform any NixOS-specific rebuild steps
+- Copies certificates from Windows to Ubuntu / Debian WSL
+- Installs Nix package manager
+- Applies home-manager configuration from the repo
 
 Notes
-- Run from an elevated PowerShell (Administrator)
 - Requires WSL installed
 - Reuses common functions from WSL-Common.ps1
 
@@ -31,13 +31,12 @@ Examples
 param(
   [Parameter()] [string] $DistroName = "Ubuntu",
   [Parameter()] [string] $Image = "Ubuntu",
-  [Parameter()] [string] $CertPath = "C:\workspace\ca-certificates.crt",
-  [Parameter()] [string] $CertOutputPath = "/usr/local/share/ca-certificates/corp-ca-certificates.crt",
   [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
-  [Parameter()] [string] $UbuntuUser = "root",
+  [Parameter()] [string] $WslUser = "luoj",
   [Parameter()] [switch] $SkipInstall,
   [Parameter()] [switch] $SkipCerts,
+  [Parameter()] [switch] $SkipNixInstall,
   [Parameter()] [switch] $ForceUnregister,
   [Parameter()] [bool] $LaunchAfterProvision = $true
 )
@@ -49,13 +48,13 @@ Set-StrictMode -Version Latest
 $scriptDir = Split-Path -Parent $PSCommandPath
 $commonModule = Join-Path $scriptDir 'WSL-Common.ps1'
 if (-not (Test-Path $commonModule)) {
-    throw "Required module not found: $commonModule"
+  throw "Required module not found: $commonModule"
 }
 . $commonModule
 
 # Resolve default path to the cert generator
 if (-not $CertGeneratorPath) {
-  $CertGeneratorPath = Join-Path $scriptDir 'Windows_to_WSL_Certs.ps1'
+  $CertGeneratorPath = Join-Path $scriptDir 'get-all-certs.sh'
 }
 
 # Auto-detect repo path using common function
@@ -89,32 +88,70 @@ else {
 # Certificate Phase
 # ============================================================================
 
+$wslCertGeneratorPath = Convert-ToWslPath $CertGeneratorPath 
+
 if (-not $SkipCerts) {
-    Write-Step "Installing certificates to $DistroName"
+  Write-Step "Installing certificates to $DistroName"
     
-    Install-CertsToWSL `
-        -DistroName $DistroName `
-        -CertGeneratorPath $CertGeneratorPath `
-        -CertPath $CertPath `
-        -OutputPath $CertOutputPath `
-        -Companies $Companies `
-        -User 'root'
+  # Update CA certificates
     
-    Write-Step "Verifying certificate in $CertOutputPath"
-    Invoke-Wsl -distro $DistroName -command "ls -lh '$CertOutputPath'" -workingDirWsl '/' -user $UbuntuUser
-    
-    # Update CA certificates
-        Write-Step "Updating CA certificates in $DistroName"
-        try {
-            Invoke-Wsl -distro $DistroName -command "update-ca-certificates" -workingDirWsl '/' -user 'root'
-            Write-Info "CA certificates updated successfully"
-        }
-        catch {
-            Write-Warn "Failed to run update-ca-certificates. You may need to run it manually."
-        }
+  try {
+    Invoke-Wsl -distro $DistroName -command "$wslCertGeneratorPath" -workingDirWsl '/' -user "root"
+    Write-Info "CA certificates updated successfully"
+  }
+  catch {
+    Write-Warn "Failed to run $wslCertGeneratorPath. You may need to run it manually."
+  }
 }
 else {
-    Write-Step "Skipping certificate installation"
+  Write-Step "Skipping certificate installation"
+}
+
+$NixBuildEnv = "NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+
+# ============================================================================
+# Nix setup phase
+# ============================================================================
+
+if (-not $SkipNixInstall) {  
+  # Install nix
+  # Invoke-Wsl -d $DistroName -command "apt-get update && apt-get install -y git" -workingDirWsl '/' -user 'root'
+  Write-Step "Installing Nix package manager in $DistroName"
+  Invoke-Wsl -d $DistroName -command "curl -L https://nixos.org/nix/install | $NixBuildEnv sh -s -- --daemon " -workingDirWsl '/' -user 'root'
+  Invoke-Wsl -d $DistroName -command "echo experimental-features = nix-command flakes >> /etc/nix/nix.conf" -workingDirWsl '/' -user 'root'
+}
+
+
+if ($RepoPathWindows) {
+  ThrowIf { -not (Test-Path -LiteralPath $RepoPathWindows) } "Repo path not found: $RepoPathWindows"
+
+  $wslUserHome = "/home/$WslUser"
+  $windowsUserHome = Convert-ToWindowsPath -WslPath $wslUserHome -DistroName $DistroName
+  if (-not (Test-Path -LiteralPath $windowsUserHome)) {
+    # Ensure user home exists by launching WSL as that user
+    Write-Info "Launching WSL to initialize home directory for user $WslUser"
+    wsl.exe -d "$DistroName"
+  }
+  else {
+    Write-Info "User home directory should already exist at $wslUserHome"
+  }
+
+  # Copy repo to WSL temp directory
+  $repoWslDest = "$wslUserHome/nixos-provisioning"
+  Write-Step "Copying repo to WSL at $repoWslDest"
+  
+  # Convert Windows path to WSL path for source
+  $repoWslSource = Convert-ToWslPath $RepoPathWindows
+  
+  # Remove existing directory if present and copy fresh
+  Invoke-Wsl -d $DistroName -command "rm -rf '$repoWslDest' && cp -r '$repoWslSource' '$repoWslDest'" -workingDirWsl '/'
+  Write-Info "Repo copied to WSL"
+  
+  # Run home-manager build from the WSL copy
+  Write-Step "Running home-manager build from WSL repo for $WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nix build '$repoWslDest#homeConfigurations.$WslUser.activationPackage'" -workingDirWsl $repoWslDest -user "$WslUser"
+  Invoke-Wsl -d $DistroName -command "mv .bashrc .bashrc.dist; mv .profile .profile.dist" -workingDirWsl $wslUserHome -user "$WslUser"
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv $repoWslDest/result/activate" -workingDirWsl $wslUserHome -user "$WslUser"
 }
 
 # ============================================================================
@@ -125,15 +162,15 @@ Write-Step "Terminating distro to ensure a clean state"
 Stop-WslDistro -DistroName $DistroName
 Start-Sleep -Seconds 2
 
-Write-Step "Shutting down WSL to finalize changes"
-Stop-AllWsl
-Start-Sleep -Seconds 2
+# Write-Step "Shutting down WSL to finalize changes"
+# Stop-AllWsl
+# Start-Sleep -Seconds 2
 
-Write-Step "Done. Ubuntu WSL provisioning completed."
+Write-Step "Done. WSL provisioning completed."
 
 if ($LaunchAfterProvision) {
-    Write-Info "Waiting 3 seconds before launching..."
-    Start-Sleep -Seconds 3
-    Write-Step "Launching WSL distro '$DistroName'..."
-    & wsl -d "$DistroName"
+  Write-Info "Waiting 3 seconds before launching..."
+  Start-Sleep -Seconds 3
+  Write-Step "Launching WSL distro '$DistroName'..."
+  & wsl -d "$DistroName"
 }
