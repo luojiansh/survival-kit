@@ -54,7 +54,7 @@
     nodejs
 
     # Nix
-    nixfmt-rfc-style
+    nixfmt
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage

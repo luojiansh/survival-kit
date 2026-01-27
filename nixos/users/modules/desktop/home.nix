@@ -128,7 +128,7 @@
       {
         timeout = 600; # 10 minutes of inactivity
         command = "${
-          inputs.noctalia.packages.${pkgs.system}.default
+          inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
         }/bin/noctalia-shell ipc call lockScreen lock"; # Lock the screen
       }
     ];
