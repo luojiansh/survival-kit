@@ -43,6 +43,8 @@
 
     # Agent
     opencode
+    claude-code
+    codex
 
     # Python
     #python313

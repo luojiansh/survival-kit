@@ -134,6 +134,12 @@
     ];
   };
 
+  programs.fuzzel = {
+    enable = true;
+  };
+  programs.distrobox = {
+    enable = true;
+  };
   # services.wlsunset = {
   #   enable = true;
   #   sunrise = "06:00";
