@@ -20,12 +20,12 @@
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
     neovim
-    python313
+    python314
 
     # Agent
-    opencode
-    claude-code
-    codex
+    #opencode
+    #claude-code
+    #codex
   ];
 
   # Global Configuration
