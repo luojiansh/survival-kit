@@ -39,7 +39,7 @@
     fd
     gh
     wl-clipboard
-    vimPlugins.opencode-nvim
+    #vimPlugins.opencode-nvim
 
     # Agent
     #opencode
