@@ -9,10 +9,10 @@ copying certificates, and running commands in WSL environments.
 #>
 
 # Guard against recursive imports
-if (Get-Variable -Name WSL_COMMON_LOADED -Scope Global -ErrorAction SilentlyContinue) {
+# Check if functions are already loaded in the current scope
+if (Get-Command -Name Get-RepoNixosPath -ErrorAction SilentlyContinue) {
   return
 }
-$Global:WSL_COMMON_LOADED = $true
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -243,7 +243,7 @@ function Install-WslDistro {
   .PARAMETER DistroName
   The name to register the distro as.
   
-  .PARAMETER ImagePath
+  .PARAMETER Image
   Path to the WSL tarball or image file, or a standard distro name (e.g., Ubuntu, Debian).
   
   .PARAMETER ForceUnregister
@@ -254,7 +254,7 @@ function Install-WslDistro {
     [string]$DistroName,
     
     [Parameter(Mandatory)]
-    [string]$ImagePath,
+    [string]$Image,
     
     [bool]$ForceUnregister = $false
   )
@@ -277,13 +277,13 @@ function Install-WslDistro {
     }
   }
   
-  # Check if ImagePath is an actual file (tarball/image) or a distro name
-  $isFile = Test-Path -LiteralPath $ImagePath -PathType Leaf
+  # Check if Image is an actual file (tarball/image) or a distro name
+  $isFile = Test-Path -LiteralPath $Image -PathType Leaf
   
   if ($isFile) {
     Write-Step "Installing WSL distro from file"
     try {
-      & wsl.exe --install --no-launch --from-file "$ImagePath" --name "$DistroName" | Write-Output
+      & wsl.exe --install --no-launch --from-file "$Image" --name "$DistroName" | Write-Output
       if ($LASTEXITCODE -ne 0) {
         throw "WSL install command returned exit code $LASTEXITCODE"
       }
@@ -294,16 +294,16 @@ function Install-WslDistro {
     }
   }
   else {
-    Write-Step "Installing WSL distro '$ImagePath' as standard distribution"
+    Write-Step "Installing WSL distro '$Image' as standard distribution"
     try {
-      & wsl.exe --install --no-launch -d "$ImagePath" | Write-Output
+      & wsl.exe --install --no-launch -d "$Image" --name "$DistroName" # | Write-Output
       if ($LASTEXITCODE -ne 0) {
         throw "WSL install command returned exit code $LASTEXITCODE"
       }
     }
     catch {
-      Write-Warn "Failed to install distro '$ImagePath'. Verify the distro name is valid."
-      throw
+     Write-Warn "Failed to install distro '$Image'. Verify the distro name is valid."
+     throw
     }
   }
   

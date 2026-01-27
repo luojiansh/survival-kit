@@ -64,7 +64,7 @@ if (-not (Test-WslInstalled)) {
 if (-not $SkipInstall) {
   $installed = Install-WslDistro `
     -DistroName $DistroName `
-    -ImagePath $NixOSWslFile `
+    -Image $NixOSWslFile `
     -ForceUnregister $ForceUnregister
   
   if (-not $installed) {
