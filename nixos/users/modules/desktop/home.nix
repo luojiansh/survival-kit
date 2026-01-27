@@ -11,6 +11,7 @@
     ./noctalia.nix
   ];
 
+  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
   # The home.packages option allows you to install Nix packages into your
   # environment.
   home.packages = with pkgs; [
@@ -39,6 +40,25 @@
     # brightnessctl
     #xdg-desktop-portal-hyprland
     ddcutil
+
+    nerd-fonts.jetbrains-mono
+    nerd-fonts.fira-code
+    nerd-fonts.symbols-only
+    nerd-fonts.sauce-code-pro
+    nerd-fonts.caskaydia-mono
+    nerd-fonts.blex-mono
+    nerd-fonts.droid-sans-mono
+    nerd-fonts.ubuntu
+    nerd-fonts.go-mono
+    nerd-fonts.monaspace
+    nerd-fonts.caskaydia-cove
+    nerd-fonts.intone-mono
+    nerd-fonts.open-dyslexic
+    nerd-fonts.noto
+    nerd-fonts.hack
+
+    google-chrome
+
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -101,6 +121,18 @@
 
   services.swayidle = {
     enable = true;
+    timeouts = [
+      {
+        timeout = 30; # 5 minutes of inactivity
+        command = "${pkgs.niri}/bin/niri msg action power-off-monitors"; # Turn off monitors
+      }
+      {
+        timeout = 600; # 10 minutes of inactivity
+        command = "${
+          inputs.noctalia.packages.${pkgs.system}.default
+        }/bin/noctalia-shell ipc call lockScreen lock"; # Lock the screen
+      }
+    ];
   };
 
   services.wlsunset = {
@@ -108,4 +140,6 @@
     sunrise = "06:00";
     sunset = "18:00";
   };
+
+  fonts.fontconfig.enable = true;
 }
