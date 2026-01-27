@@ -1,7 +1,7 @@
+{ hostname, ... }:
 {
   imports = [
-    ../modules/desktop/home.nix
-    ../modules/console/home.nix
+    ./${hostname}/home.nix
   ];
 
   home.username = "jian";

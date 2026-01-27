@@ -33,8 +33,9 @@ param(
   [Parameter()] [string] $GeneratorUser = "luoj",
   [Parameter()] [string] $NixOSHostname = "AT-L-PF5S785B",
   [Parameter()] [switch] $SkipInstall,
+  [Parameter()] [switch] $SkipCerts,
   [Parameter()] [switch] $ForceUnregister,
-  [Parameter()] [switch] $LaunchAfterProvision = $true
+  [Parameter()] [bool] $LaunchAfterProvision = $true
 )
 
 $ErrorActionPreference = 'Stop'
@@ -147,44 +148,48 @@ if (-not $SkipInstall) {
   }
 }
 
-# Generate or locate CA certificate bundle
-$nixosOutputPath = "/etc/nixos/ca-certificates.crt"
-$etcNixosCertWindows = Convert-ToWindowsPath $nixosOutputPath
 
-ThrowIf { -not (Test-Path -LiteralPath $CertGeneratorPath) } "Cert generator not found: $CertGeneratorPath"
+$NixBuildEnv = ""
 
-# Use Windows_to_WSL_Certs to generate and copy certificates
-& powershell.exe -ExecutionPolicy Bypass -File $CertGeneratorPath `
-  -Distro $DistroName -User root -InputPath "$CertPath" `
-  -OutputPath $nixosOutputPath @Companies
+if (-not $SkipCerts) {
+  # Generate or locate CA certificate bundle
+  $nixosOutputPath = "/etc/nixos/ca-certificates.crt"
+  $etcNixosCertWindows = Convert-ToWindowsPath $nixosOutputPath
 
-# Copy to repo if available (read from WSL filesystem)
-if (Test-Path $etcNixosCertWindows) {
+  ThrowIf { -not (Test-Path -LiteralPath $CertGeneratorPath) } "Cert generator not found: $CertGeneratorPath"
+
+  # Use Windows_to_WSL_Certs to generate and copy certificates
+  & powershell.exe -ExecutionPolicy Bypass -File $CertGeneratorPath `
+    -Distro $DistroName -User root -InputPath "$CertPath" `
+    -OutputPath $nixosOutputPath @Companies
+
+  # Copy to repo if available (read from WSL filesystem)
+  if (Test-Path $etcNixosCertWindows) {
     Copy-CertToRepo -sourceCert $etcNixosCertWindows -repoPath $RepoPathWindows -hostname $NixOSHostname
-}
-else {
-  throw "Certificate file not found at $CertPath and no -Companies specified. Provide a valid -CertPath or specify -Companies to generate certificates."
-}
+  }
+  else {
+    throw "Certificate file not found at $CertPath and no -Companies specified. Provide a valid -CertPath or specify -Companies to generate certificates."
+  }
 
-Write-Step "Verifying CA bundle in /etc/nixos"
-Invoke-Wsl -d $DistroName -command "ls -lh /etc/nixos/ca-certificates.crt" -workingDirWsl '/'
+  Write-Step "Verifying CA bundle in /etc/nixos"
+  Invoke-Wsl -d $DistroName -command "ls -lh /etc/nixos/ca-certificates.crt" -workingDirWsl '/'
 
-Write-Step "Writing minimal /etc/nixos/configuration.nix"
+  Write-Step "Writing minimal /etc/nixos/configuration.nix"
 
-# Check if configuration.nix already contains ca-certificates.crt reference
-$configHasCert = $false
-try {
-  Invoke-Wsl -d $DistroName -command "grep -q 'ca-certificates.crt' /etc/nixos/configuration.nix" -workingDirWsl '/' -user 'root'
-  $configHasCert = $true
-  Write-Info "Configuration already contains ca-certificates.crt reference, skipping append"
-}
-catch {
-  # grep returns non-zero if not found, which is expected
-  Write-Info "Ca-certificates.crt not found in configuration, will append"
-}
+  # Check if configuration.nix already contains ca-certificates.crt reference
+  $configHasCert = $false
+  try {
+    Invoke-Wsl -d $DistroName -command "grep -q 'ca-certificates.crt' /etc/nixos/configuration.nix" -workingDirWsl '/' -user 'root'
+    $configHasCert = $true
+    Write-Info "Configuration already contains ca-certificates.crt reference, skipping append"
+  }
+  catch {
+    # grep returns non-zero if not found, which is expected
+    Write-Info "Ca-certificates.crt not found in configuration, will append"
+  }
 
-if (-not $configHasCert) {
-  $cfg = @'
+  if (-not $configHasCert) {
+    $cfg = @'
 //
 {
   security.pki.certificateFiles = [ ./ca-certificates.crt ];
@@ -192,22 +197,24 @@ if (-not $configHasCert) {
   environment.systemPackages = with pkgs; [ git neovim gh ];
 }
 '@
-  # Use temp file to avoid shell quoting issues
-  $tempFile = [System.IO.Path]::GetTempFileName()
-  try {
-    Set-Content -LiteralPath $tempFile -Value $cfg -Encoding ASCII -NoNewline
-    $tempWsl = Convert-ToWslPath $tempFile
-    Invoke-Wsl -d $DistroName -command "tee -a /etc/nixos/configuration.nix < '$tempWsl' >/dev/null" -workingDirWsl '/' -user 'root'
-  }
-  finally {
-    if (Test-Path -LiteralPath $tempFile) {
-      Remove-Item -LiteralPath $tempFile -Force
+    # Use temp file to avoid shell quoting issues
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    try {
+      Set-Content -LiteralPath $tempFile -Value $cfg -Encoding ASCII -NoNewline
+      $tempWsl = Convert-ToWslPath $tempFile
+      Invoke-Wsl -d $DistroName -command "tee -a /etc/nixos/configuration.nix < '$tempWsl' >/dev/null" -workingDirWsl '/' -user 'root'
+    }
+    finally {
+      if (Test-Path -LiteralPath $tempFile) {
+        Remove-Item -LiteralPath $tempFile -Force
+      }
     }
   }
+  $NixBuildEnv = "NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt"
 }
 
 Write-Step "Running initial nixos-rebuild switch with NIX_SSL_CERT_FILE"
-Invoke-Wsl -d $DistroName -command "NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt nixos-rebuild switch" -workingDirWsl '/' -user 'root'
+Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild switch" -workingDirWsl '/' -user 'root'
 
 if ($RepoPathWindows) {
   ThrowIf { -not (Test-Path -LiteralPath $RepoPathWindows) } "Repo path not found: $RepoPathWindows"
@@ -225,7 +232,7 @@ if ($RepoPathWindows) {
   
   # Run flake boot from the WSL copy
   Write-Step "Running flake boot from WSL repo for host '$NixOSHostname'"
-  Invoke-Wsl -d $DistroName -command "NIX_SSL_CERT_FILE=/etc/nixos/ca-certificates.crt nixos-rebuild boot --flake '$repoWslDest#$NixOSHostname'" -workingDirWsl $repoWslDest -user 'root'
+  Invoke-Wsl -d $DistroName -command "$NixBuildEnv nixos-rebuild boot --flake '$repoWslDest#$NixOSHostname'" -workingDirWsl $repoWslDest -user 'root'
 }
 
 Write-Step "Terminating distro to ensure a clean state"
