@@ -8,12 +8,14 @@ Scope and precedence
 - If Cursor/Copilot rules appear later, mirror key rules here and follow them.
 
 Repository layout
-- nixos/flake.nix: Primary flake with all outputs
-- nixos/hosts/*: Host-specific NixOS modules and hardware configs
-- nixos/users/*: User-specific Home Manager modules and shared user glue
-- nixos/users/modules/*: Reusable Home Manager modules (console, desktop)
-- nixos/home/standalone.nix: Standalone Home Manager defaults
-- scripts/: One-off setup snippets and WSL bootstrap notes
+- nixos/flake.nix: Primary flake with all outputs.
+- nixos/hosts/<host>/: Host-specific NixOS modules and hardware configs.
+- nixos/hosts/profiles/*: Shared host profiles (common, linux, wsl, virtualization).
+- nixos/users/<user>/: User-specific NixOS/Home Manager modules.
+- nixos/users/user.nix: Shared Home Manager entrypoint for per-user config.
+- nixos/users/modules/*: Reusable Home Manager modules (console, desktop).
+- nixos/home/standalone.nix: Standalone Home Manager defaults.
+- scripts/: WSL provisioning and certificate utilities.
 
 Prerequisites
 - Nix with flakes enabled. On managed systems, flakes are enabled via the config already.
@@ -22,7 +24,7 @@ Prerequisites
 Build, switch, and validate
 Notes
 - The flake lives in nixos/. Use --flake nixos#... from the repo root, or run commands with workdir=nixos/.
-- Replace AT-L-PF5S785B or rhino with your target hostname.
+- Known hosts: AT-L-PF5S785B, rhino, soyo, windy.
 
 NixOS host: build only
 ```
@@ -59,12 +61,12 @@ Update inputs and lock file
 
 Home Manager (standalone)
 - This flake exposes per-user Home Manager configurations via legacyPackages.
-- Build activation package and activate manually, or run via HM CLI when exposed.
+- Users wired today: jian, luoj.
 
 Build Home activation package
 ```
 # Replace x86_64-linux by your system if different
-nix build nixos#legacyPackages.x86_64-linux.homeConfigurations.luoj.activationPackage
+nix build nixos#legacyPackages.x86_64-linux.homeConfigurations.jian.activationPackage
 ```
 Activate built Home configuration
 ```
@@ -74,7 +76,7 @@ Activate built Home configuration
 Home Manager switch via CLI (if you later add outputs.homeConfigurations)
 ```
 # Not currently wired; shown here for future reference
-home-manager switch --flake nixos#luoj
+home-manager switch --flake nixos#jian
 ```
 
 Lint and formatting
@@ -96,20 +98,22 @@ Optional: run on specific files
 nixfmt nixos/users/modules/console/home.nix
 ```
 Evaluation checks
-- If you add flake checks, run them with:
+- This flake defines a basic check named sanity.
+- Run all checks or a single check:
 ```
-nix flake check nixos
+nix build nixos#checks.x86_64-linux
+nix build nixos#checks.x86_64-linux.sanity
 ```
 
-Tests and “single test” guidance
+Tests and single test guidance
 Current status
 - No unit or integration tests are defined in this repository.
-- There are no nixosTests or flake checks provided at present.
+- No nixosTests are provided at present.
 
 Recommended approach
 - Treat per-host builds as validations:
-  - Single host “test”: sudo nixos-rebuild test --flake nixos#<host>
-  - Single home “test”: build activation package and run ./result/activate
+  - Single host "test": sudo nixos-rebuild test --flake nixos#<host>
+  - Single home "test": build activation package and run ./result/activate
 - If you add Nix checks under outputs.checks.<system>:
   - Run all checks: nix build nixos#checks.x86_64-linux
   - Run a single check: nix build nixos#checks.x86_64-linux.<name>
@@ -157,7 +161,7 @@ Comments and documentation
 
 Commit and PR etiquette
 - Keep changes focused; avoid sweeping refactors mixed with functional changes.
-- Describe the “why” in commit messages; the “what” is visible in diffs.
+- Describe the "why" in commit messages; the "what" is visible in diffs.
 - Do not commit secrets or machine-local state; prefer options for paths.
 
 Certificates and secrets
@@ -178,6 +182,8 @@ Quick commands cheat sheet
 - Switch NixOS host: sudo nixos-rebuild switch --flake nixos#<host>
 - Build Home activation: nix build nixos#legacyPackages.$(nix eval --raw --expr builtins.currentSystem).homeConfigurations.<user>.activationPackage
 - Activate Home: ./result/activate
+- Run checks: nix build nixos#checks.x86_64-linux
+- Run sanity check: nix build nixos#checks.x86_64-linux.sanity
 - Format Nix: nixfmt nixos
 
 Contributing notes for agents
