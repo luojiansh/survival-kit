@@ -52,11 +52,12 @@
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
+  programs.niri.enable = true;
 
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "us";
-    variant = "";
+    variant = "altgr-intl";
   };
 
   # Enable CUPS to print documents.
@@ -162,17 +163,6 @@
 
   # Niri
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  programs.uwsm = {
-    enable = true;
-    # You must configure the waylandCompositors suboptions so that UWSM knows which compositors to manage. 
-    waylandCompositors = {
-      niri = {
-        prettyName = "Niri The Goat";
-        comment = "Niri";
-        binPath = "/run/current-system/sw/bin/niri-session";
-      };
-    };
-  };
 
   # Enable flake
   nix.settings.experimental-features = [ "nix-command" "flakes" ];

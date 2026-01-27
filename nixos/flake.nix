@@ -69,6 +69,7 @@
           inherit specialArgs;
           system = "x86_64-linux";
           modules = [
+            ./hosts/host.nix
             ./hosts/machinist/configuration.nix
             ./users/${username}/nixos.nix
             #lazyvim.homeManagerModules.default

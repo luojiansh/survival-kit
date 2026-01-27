@@ -44,6 +44,7 @@
     fd
     gh
     wl-clipboard
+    vimPlugins.opencode-nvim
 
     # Agent
     opencode
@@ -51,6 +52,10 @@
     # Niri
     swaybg
     xwayland-satellite # xwayland support
+
+    # Python
+    python313
+    python313Packages.uv
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -87,6 +92,9 @@
   home.sessionVariables = {
     EDITOR = "nvim";
   };
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -134,4 +142,5 @@
   services.mako.enable = true; # notification daemon
   services.swayidle.enable = true; # idle management daemon
   services.polkit-gnome.enable = true; # polkit
+  xdg.configFile."niri/config.kdl".source = ./config.kdl;
 }
