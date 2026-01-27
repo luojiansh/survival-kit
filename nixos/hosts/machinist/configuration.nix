@@ -82,15 +82,15 @@
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.jian = {
-    isNormalUser = true;
-    description = "Jian";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      kdePackages.kate
-    #  thunderbird
-    ];
-  };
+#  users.users.jian = {
+#    isNormalUser = true;
+#    description = "Jian";
+#    extraGroups = [ "networkmanager" "wheel" ];
+#    packages = with pkgs; [
+#      kdePackages.kate
+#    #  thunderbird
+#    ];
+#  };
 
   # Install firefox.
   programs.firefox.enable = true;
@@ -105,7 +105,6 @@
   #  wget
     neovim
     niri
-    kdePackages.sddm-kcm
   ];
 
   # Global Configuration

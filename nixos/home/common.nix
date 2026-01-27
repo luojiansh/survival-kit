@@ -1,15 +1,10 @@
 { config, pkgs, ... }:
 
 {
-  nix = {
-    package = pkgs.nix;
-    settings.experimental-features = [ "nix-command" "flakes" ];
-  };
-
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
-  home.username = "jian";
-  home.homeDirectory = "/home/jian";
+  #home.username = "jian";
+  #home.homeDirectory = "/home/jian";
 
   # This value determines the Home Manager release that your configuration is
   # compatible with. This helps avoid breakage when a new Home Manager release
@@ -54,8 +49,8 @@
     opencode
 
     # Niri
-    pkgs.swaybg
-    pkgs.xwayland-satellite # xwayland support
+    swaybg
+    xwayland-satellite # xwayland support
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -102,10 +97,10 @@
   # Git
   programs.git = {
     enable = true;
-    settings.user = {
-      name = "Jian Luo";
-      email = "jian.luo.cn@gmail.com";
-    };
+  #  settings.user = {
+  #    name = "Jian Luo";
+  #    email = "jian.luo.cn@gmail.com";
+  #  };
   };
   programs.gh = {
     enable = true;
