@@ -50,6 +50,9 @@
     #python313
     python313Packages.uv
 
+    # Node.js
+    nodejs
+
     # Nix
     nixfmt-rfc-style
   ];
