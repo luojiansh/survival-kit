@@ -6,10 +6,8 @@
 }:
 
 {
-  networking.hostName = pkgs.lib.mkForce "${hostname}"; # Define your hostname.
-
   # Allow unfree packages
-  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
+  nixpkgs.config.allowUnfree = nixpkgs.lib.mkForce true;
 
   services.envfs.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -35,18 +33,9 @@
   environment.systemPackages = with pkgs; [
     #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
     #  wget
-    neovim
     niri
     google-chrome
   ];
-
-  # Global Configuration
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
-  };
 
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
@@ -69,10 +58,4 @@
   # Niri
   programs.niri.enable = true;
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
-
-  # Enable flake
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
 }
