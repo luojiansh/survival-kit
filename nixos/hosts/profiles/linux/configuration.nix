@@ -7,7 +7,7 @@
 
 {
   # Allow unfree packages
-  nixpkgs.config.allowUnfree = nixpkgs.lib.mkForce true;
+  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
 
   services.envfs.enable = true;
   services.power-profiles-daemon.enable = true;

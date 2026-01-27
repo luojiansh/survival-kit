@@ -59,15 +59,15 @@
             ./hosts/${hostname}/nixos.nix
             ./users/${username}/nixos.nix
 
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.backupFileExtension = "bak";
-
-              home-manager.extraSpecialArgs = { inherit username inputs; };
-              home-manager.users.${username} = import ./users/user.nix;
-            }
+          #   home-manager.nixosModules.home-manager
+          #   {
+          #     home-manager.useGlobalPkgs = true;
+          #     home-manager.useUserPackages = true;
+          #     home-manager.backupFileExtension = "bak";
+          #
+          #     home-manager.extraSpecialArgs = { inherit username inputs; };
+          #     home-manager.users.${username} = import ./users/user.nix;
+          #   }
           ];
         };
 
@@ -109,22 +109,24 @@
         };
       }
     )
-
-    //
-
       # Host configuration
-      {
-        nixosConfigurations = {
-          "AT-L-PF5S785B" = mkHost {
-            hostname = "AT-L-PF5S785B";
-            username = "luoj";
-            system = "x86_64-linux";
-          };
-          rhino = mkHost {
-            hostname = "rhino";
-            username = "jian";
-            system = "x86_64-linux";
-          };
+    // {
+      nixosConfigurations = {
+        "AT-L-PF5S785B" = mkHost {
+          hostname = "AT-L-PF5S785B";
+          username = "luoj";
+          system = "x86_64-linux";
+        };
+        rhino = mkHost {
+          hostname = "rhino";
+          username = "jian";
+          system = "x86_64-linux";
+        };
+        soyo = mkHost {
+          hostname = "soyo";
+          username = "jian";
+          system = "x86_64-linux";
         };
       };
+    };
 }

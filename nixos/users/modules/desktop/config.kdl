@@ -111,6 +111,10 @@ output "MS Telematica MStar Demo 0x00000001" {
     position x=1280 y=0
 }
 
+output "Iiyama North America PL3493WQ 1171401400402" {
+    mode "3440x1440@59.973"
+}
+
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://yalter.github.io/niri/Configuration:-Layout
@@ -381,9 +385,10 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+T hotkey-overlay-title="Open a Terminal: " { spawn "ghostty"; }
-    Mod+D hotkey-overlay-title="Run an Application: " { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: " { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "lockAndSuspend"; }
+    Mod+Return hotkey-overlay-title="Open a Terminal: " { spawn "ghostty"; }
+    Mod+Space hotkey-overlay-title="Run an Application: " { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
+    // Super+Alt+L hotkey-overlay-title="Lock the Screen: " { spawn "swaylock"; }
+    Mod+Shift+P hotkey-overlay-title="Lock the Screen: " { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "lockAndSuspend"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
@@ -638,5 +643,5 @@ binds {
 
     // Powers off the monitors. To turn them back on, do any input like
     // moving the mouse or pressing any other key.
-    Mod+Shift+P { power-off-monitors; }
+    //Mod+Shift+P { power-off-monitors; }
 }
