@@ -15,12 +15,12 @@ Examples
     -CertPath "C:\\workspace\\ca-certificates.crt" `
     -DistroName "NixOS"
 
-  # Generate certs from Windows store for issuers/subjects containing strings
-  .\Provision-NixOSWSL.ps1 -Companies "Company1","Company2" `
+  # Generate all Root and CA certs from Windows store
+  .\Provision-NixOSWSL.ps1 `
     -Image "$env:USERPROFILE\Downloads\nixos.wsl" -DistroName "NixOS"
 
   # With flake boot from auto-detected repo
-  .\Provision-NixOSWSL.ps1 -Companies "Company1"
+  .\Provision-NixOSWSL.ps1
 !#>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -28,7 +28,6 @@ param(
   [Parameter()] [string] $DistroName = "NixOS",
   [Parameter()] [string] $Image = "$env:USERPROFILE\Downloads\nixos.wsl",
   [Parameter()] [string] $CertPath = "C:\workspace\ca-certificates.crt",
-  [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
   [Parameter()] [string] $WslUser = "$env:USERNAME".ToLower(),
   [Parameter()] [string] $NixOSHostname = (hostname),
@@ -101,12 +100,12 @@ if (-not $SkipCerts) {
 
   Write-Step "Installing certificates to NixOS"
   
+
   Install-CertsToWSL `
     -DistroName $DistroName `
     -CertGeneratorPath $CertGeneratorPath `
     -CertPath $CertPath `
     -OutputPath $nixosOutputPath `
-    -Companies $Companies `
     -User 'root'
 
   # Copy to repo if available (read from WSL filesystem)
@@ -114,7 +113,7 @@ if (-not $SkipCerts) {
     Copy-CertToRepo -sourceCert $etcNixosCertWindows -repoPath $RepoPathWindows -hostname $NixOSHostname
   }
   else {
-    throw "Certificate file not found at $CertPath and no -Companies specified. Provide a valid -CertPath or specify -Companies to generate certificates."
+    throw "Certificate installation failed. Provide a valid -CertPath or ensure Windows_to_WSL_Certs.ps1 can access Root and CA certificates."
   }
 
   Write-Step "Verifying CA bundle in /etc/nixos"

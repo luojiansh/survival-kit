@@ -13,9 +13,9 @@ Requirements
 - Certificate issuer/subject knowledge (when generating)
 
 Examples
-  # Generate from Windows store
+  # Generate from Windows store (all Root and CA certs)
   .\Windows_to_WSL_Certs.ps1 -Distro NixOS -User jian `
-    -OutputPath "/etc/nixos/ca-certificates.crt" Company1 Company2
+    -OutputPath "/etc/nixos/ca-certificates.crt"
 
   # Use existing certificate file
   .\Windows_to_WSL_Certs.ps1 -Distro NixOS -User jian `
@@ -27,8 +27,7 @@ param(
   [Parameter(Mandatory)] [string] $Distro,
   [Parameter(Mandatory)] [string] $User,
   [Parameter()] [string] $InputPath,
-  [Parameter()] [string] $OutputPath,
-  [Parameter(ValueFromRemainingArguments)] [string[]] $Companies
+  [Parameter()] [string] $OutputPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -72,11 +71,8 @@ if ($InputPath -and (Test-Path $InputPath)) {
     # Convert Windows path to WSL path using common function
     $inputWslPath = Convert-ToWslPath -WindowsPath $InputPath
     
-    # Get parent directory of output path
-    $outputDir = Split-Path -Parent $OutputPath
-    
     # Copy using WSL as the specified user (handles permissions correctly)
-    wsl -d $Distro -u $User -e sh -c "mkdir -p '$outputDir' && sudo cp '$inputWslPath' '$OutputPath' && sudo chmod 644 '$OutputPath'"
+    wsl -d $Distro -u $User -e sh -c "sudo install -D -m 0644 '$inputWslPath' '$OutputPath'"
     
     Write-Host "Certificate copied to " -ForegroundColor Green -NoNewline
     Write-Host $OutputPath -ForegroundColor Yellow -NoNewline
@@ -90,26 +86,13 @@ if ($InputPath -and (Test-Path $InputPath)) {
 }
 
 # No valid cert provided, generate from Windows store
-if (-not $Companies -or $Companies.Count -eq 0) {
-  Write-Host "No valid certificate file provided and no companies specified for generation." -ForegroundColor Red
-  Write-Host "Usage: Provide -InputPath or specify company names to search" -ForegroundColor Yellow
-  exit 1
-}
+Write-Info "Exporting all Root and CA certificates from LocalMachine"
 
-Write-Info "Searching for certificates matching: $($Companies -join ', ')"
-
-# Get a list of all Certificates in Local Machine store where either the Issuer or Subject contains any of the company names
-$all_certs = @(Get-ChildItem -path Cert:\LocalMachine\* -Recurse | Where-Object {
-  $cert = $_
-  $match = $false
-  foreach ($company in $Companies) {
-    if ($cert.Issuer -like "*$company*" -or $cert.Subject -like "*$company*") {
-      $match = $true
-      break
-    }
-  }
-  $match
-} | Select-Object -Property * )
+# Get all certificates from Root and CA stores in LocalMachine
+$all_certs = @(
+  Get-ChildItem -Path Cert:\LocalMachine\Root -ErrorAction SilentlyContinue
+  Get-ChildItem -Path Cert:\LocalMachine\CA -ErrorAction SilentlyContinue
+) | Select-Object -Property *
 
 if ($all_certs.Length -eq 0) {
   Write-Host "No certificates found for your input, try again." -ForegroundColor Yellow
@@ -155,11 +138,8 @@ else {
       # Convert Windows temp path to WSL path using common function
       $tempWslPath = Convert-ToWslPath -WindowsPath $combined_file_path
       
-      # Get parent directory of output path
-      $outputDir = Split-Path -Parent $OutputPath
-      
       # Copy using WSL as the specified user (handles permissions correctly)
-      wsl -d $Distro -u $User -e sh -c "mkdir -p '$outputDir' && cp '$tempWslPath' '$OutputPath' && chmod 644 '$OutputPath'"
+      wsl -d $Distro -u $User -e sh -c "sudo install -D -m 0644 '$tempWslPath' '$OutputPath'"
       
       Write-Host "`nImported " -ForegroundColor Green -NoNewLine
       Write-Host $cert_count -ForegroundColor Cyan -NoNewLine

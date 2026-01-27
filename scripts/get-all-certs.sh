@@ -27,10 +27,15 @@ function main() {
 	rm -rf ${OUTPUT_CERTS_DIR}
 	cp -r "${tempdir}/all-certificates" "${OUTPUT_CERTS_DIR}"
 
+	if grep -q fedora /etc/os-release; then
+		mv /usr/local/share/ca-certificates/* /etc/pki/ca-trust/source/anchors/
+		update-ca-trust
+	else
 	update-ca-certificates
+	fi
 }
 
-SCRIPT_CONTENT=$'# Fetches all certificates into a directory called "all-certificates"
+SCRIPT_CONTENT=$'# Fetches Root and CA certificates from LocalMachine into a directory called "all-certificates"
 
 $StoreToDir = "all-certificates"
 $InsertLineBreaks=1
@@ -41,8 +46,11 @@ If (Test-Path $StoreToDir) {
 }
 New-Item $StoreToDir -ItemType directory
 
-Get-ChildItem -Recurse cert: `
-  | Where-Object { $_ -is [System.Security.Cryptography.X509Certificates.X509Certificate2] } `
+# Get certificates only from LocalMachine Root and CA stores
+@(
+  Get-ChildItem -Path Cert:\\LocalMachine\\Root -ErrorAction SilentlyContinue
+  Get-ChildItem -Path Cert:\\LocalMachine\\CA -ErrorAction SilentlyContinue
+) | Where-Object { $_ -is [System.Security.Cryptography.X509Certificates.X509Certificate2] } `
   | ForEach-Object {
     $name = $_.Subject -replace \'[\\W]\', \'_\'
     $oPem=new-object System.Text.StringBuilder

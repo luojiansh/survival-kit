@@ -185,9 +185,6 @@ function Install-CertsToWSL {
   .PARAMETER OutputPath
   Target path in WSL for certificates.
   
-  .PARAMETER Companies
-  Array of company name filters for cert generation.
-  
   .PARAMETER User
   WSL user for cert operations (default: root).
   #>
@@ -203,8 +200,6 @@ function Install-CertsToWSL {
     [Parameter(Mandatory)]
     [string]$OutputPath,
     
-    [string[]]$Companies,
-    
     [string]$User = "root"
   )
   
@@ -218,10 +213,6 @@ function Install-CertsToWSL {
   
   if ($CertPath -and (Test-Path $CertPath)) {
     $certArgs += @('-InputPath', $CertPath)
-  }
-  
-  if ($Companies) {
-    $certArgs += $Companies
   }
   
   & powershell.exe -ExecutionPolicy Bypass -File $CertGeneratorPath @certArgs

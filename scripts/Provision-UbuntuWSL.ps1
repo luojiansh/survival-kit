@@ -18,20 +18,19 @@ Examples
     -CertPath "C:\workspace\ca-certificates.crt" `
     -DistroName "Ubuntu-22.04"
 
-  # Generate certs from Windows store for issuers/subjects containing strings
-  .\Provision-UbuntuWSL.ps1 -Companies "Company1","Company2" `
+  # Generate all Root and CA certs from Windows store
+  .\Provision-UbuntuWSL.ps1 `
     -Image "Ubuntu-22.04" `
     -DistroName "Ubuntu-22.04"
 
   # Skip installation if distro already exists
-  .\Provision-UbuntuWSL.ps1 -Companies "Company1" -SkipInstall -DistroName "Ubuntu-22.04"
+  .\Provision-UbuntuWSL.ps1 -SkipInstall -DistroName "Ubuntu-22.04"
 !#>
 
 [CmdletBinding(SupportsShouldProcess)]
 param(
   [Parameter()] [string] $DistroName = "Ubuntu",
   [Parameter()] [string] $Image = "Ubuntu",
-  [Parameter()] [string[]] $Companies,
   [Parameter()] [string] $CertGeneratorPath,
   [Parameter()] [string] $WslUser = "$env:USERNAME".ToLower(),
   [Parameter()] [string] $NixOSHostname = (hostname),
