@@ -1,7 +1,15 @@
-{ config, pkgs, hostname, ... }:
+{
+  config,
+  pkgs,
+  hostname,
+  ...
+}:
 
 {
   networking.hostName = pkgs.lib.mkForce "${hostname}"; # Define your hostname.
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
 
   services.envfs.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -25,13 +33,12 @@
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
+    #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
+    #  wget
     neovim
     niri
     google-chrome
   ];
-
 
   # Global Configuration
   programs.neovim = {
@@ -64,5 +71,8 @@
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
 
   # Enable flake
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 }

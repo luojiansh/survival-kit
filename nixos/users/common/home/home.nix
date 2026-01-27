@@ -1,4 +1,9 @@
-{ config, pkgs, inputs, ... }:
+{
+  config,
+  pkgs,
+  inputs,
+  ...
+}:
 
 {
   imports = [
@@ -114,23 +119,26 @@
 
   programs.readline = {
     enable = true;
-    bindings = { "\\C-H" = "backward-kill-word"; };
-    variables = { editing-mode = "vi"; };
+    bindings = {
+      "\\C-H" = "backward-kill-word";
+    };
+    variables = {
+      editing-mode = "vi";
+    };
   };
 
   # Git
   programs.git = {
     enable = true;
-  #  settings.user = {
-  #    name = "Jian Luo";
-  #    email = "jian.luo.cn@gmail.com";
-  #  };
   };
   programs.gh = {
     enable = true;
     gitCredentialHelper = {
       enable = true;
-      hosts = [ "https://github.com" "https://gist.github.com" ];
+      hosts = [
+        "https://github.com"
+        "https://gist.github.com"
+      ];
     };
   };
 
@@ -151,12 +159,6 @@
   programs.lazyvim.enable = true;
 
   # Niri
-  # programs.alacritty = {
-  #   enable = true; # Super+T in the default setting (terminal)
-  #   settings = {
-  #     window.opacity = 0.8;
-  #   };
-  # };
   xdg.configFile."niri/config.kdl".source = ./config.kdl;
 
   programs.noctalia-shell = {

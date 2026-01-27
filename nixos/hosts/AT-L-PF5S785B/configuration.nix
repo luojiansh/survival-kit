@@ -13,7 +13,7 @@
   ];
 
   wsl.enable = true;
-  wsl.wslConf.network.hostname = "AT-L-PF5S785B"
+  wsl.wslConf.network.hostname = "AT-L-PF5S785B";
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
