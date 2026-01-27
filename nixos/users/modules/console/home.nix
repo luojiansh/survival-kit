@@ -45,7 +45,7 @@
     opencode
 
     # Python
-    python313
+    #python313
     python313Packages.uv
 
     # Nix
