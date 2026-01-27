@@ -80,8 +80,9 @@
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
         users = [
-          "jian"
-          "luoj"
+          "jian"  # Linux user
+          "jianl" # WSL user
+          "luoj"  # Company laptop user
         ];
         homeConfig =
           username:
@@ -129,7 +130,7 @@
         };
         windy = mkHost {
           hostname = "windy";
-          username = "jian";
+          username = "jianl";
           system = "x86_64-linux";
         };
       };
