@@ -100,7 +100,7 @@
           boxBorderEnabled = false;
         };
         location = {
-          name = "Tokyo";
+          name = "Wertheim";
           weatherEnabled = true;
           weatherShowEffects = true;
           useFahrenheit = false;
@@ -391,7 +391,7 @@
         colorSchemes = {
           useWallpaperColors = false;
           predefinedScheme = "Noctalia (default)";
-          darkMode = true;
+          darkMode = false;
           schedulingMode = "off";
           manualSunrise = "06:30";
           manualSunset = "18:30";
@@ -402,7 +402,7 @@
           gtk = false;
           qt = false;
           kcolorscheme = false;
-          alacritty = false;
+          alacritty = true;
           kitty = false;
           ghostty = false;
           foot = false;

@@ -7,13 +7,8 @@
 {
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.jian = {
-    isNormalUser = true;
-    description = "Jian";
-    extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
-      kdePackages.kate
       kdePackages.sddm-kcm
-    #  thunderbird
     ];
   };
 }

@@ -1,7 +1,9 @@
-{ config, pkgs, quickshell, ... }:
+{ config, pkgs, inputs, ... }:
 
 {
   imports = [
+    inputs.noctalia.homeModules.default
+    inputs.lazyvim.homeManagerModules.default
     ./noctalia.nix
   ];
   # Home Manager needs a bit of information about you and the paths it should
@@ -53,15 +55,17 @@
     opencode
 
     # Niri
-    swaybg
     xwayland-satellite # xwayland support
 
     # Quickshell
-    quickshell.packages.${pkgs.system}.default
+    inputs.quickshell.packages.${stdenv.targetPlatform.system}.default
 
     # Python
     python313
     python313Packages.uv
+
+    # Nix
+    nixfmt-rfc-style
   ];
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
@@ -108,6 +112,12 @@
   # Bash
   programs.bash.enable = true;
 
+  programs.readline = {
+    enable = true;
+    bindings = { "\\C-H" = "backward-kill-word"; };
+    variables = { editing-mode = "vi"; };
+  };
+
   # Git
   programs.git = {
     enable = true;
@@ -141,13 +151,23 @@
   programs.lazyvim.enable = true;
 
   # Niri
-  programs.alacritty.enable = true; # Super+T in the default setting (terminal)
-  services.mako.enable = true; # notification daemon
-  services.swayidle.enable = true; # idle management daemon
-  services.polkit-gnome.enable = true; # polkit
+  # programs.alacritty = {
+  #   enable = true; # Super+T in the default setting (terminal)
+  #   settings = {
+  #     window.opacity = 0.8;
+  #   };
+  # };
   xdg.configFile."niri/config.kdl".source = ./config.kdl;
 
   programs.noctalia-shell = {
     enable = true;
+  };
+
+  programs.ghostty = {
+    enable = true;
+    settings = {
+      background-opacity = 0.9;
+      alpha-blending = "native"; # (or linear-corrected)
+    };
   };
 }
