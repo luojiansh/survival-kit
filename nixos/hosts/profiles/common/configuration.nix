@@ -1,12 +1,16 @@
 {
   config,
   pkgs,
+  username,
   hostname,
   ...
 }:
 
 {
   networking.hostName = pkgs.lib.mkForce "${hostname}"; # Define your hostname.
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = pkgs.lib.mkForce true;
+
 
   #services.envfs.enable = true;
 
@@ -17,6 +21,11 @@
     #  wget
     neovim
     python313
+
+    # Agent
+    opencode
+    claude-code
+    codex
   ];
 
   # Global Configuration
@@ -44,4 +53,8 @@
       # (pkgs.runCommand "steamrun-lib" {} "mkdir $out; ln -s ${pkgs.steam-run.fhsenv}/usr/lib64 $out/lib")
     ];
   };
+
+  services.dbus.implementation = "broker";
+  users.groups.${username}.gid = 1000;
+  users.users.${username}.group = "${username}";
 }
