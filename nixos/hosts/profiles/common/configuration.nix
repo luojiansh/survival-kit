@@ -57,4 +57,7 @@
   services.dbus.implementation = "broker";
   users.groups.${username}.gid = 1000;
   users.users.${username}.group = "${username}";
+
+  programs.htop.enable = true;
+
 }
