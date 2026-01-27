@@ -391,15 +391,15 @@ binds {
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
     Mod+Space hotkey-overlay-title="Run an Application: " { spawn "noctalia-shell" "ipc" "call" "launcher" "toggle"; }
-    Mod+Return hotkey-overlay-title="Open a Terminal: " { spawn "ghostty"; }
-    Mod+F7 hotkey-overlay-title="Open a Terminal: " { spawn "ghostty"; }
+    Mod+Return hotkey-overlay-title="Open a Terminal: " { spawn "alacritty"; }
+    Mod+F7 hotkey-overlay-title="Open a Terminal: " { spawn "alacritty"; }
     Mod+B hotkey-overlay-title="Open a Browser: " { spawn "google-chrome-stable"; }
     Mod+F8 hotkey-overlay-title="Open a Browser: " { spawn "google-chrome-stable"; }
     Mod+E hotkey-overlay-title="Open a File Manager: " { spawn "dolphin"; }
     Mod+F9 hotkey-overlay-title="Open a File Manager: " { spawn "dolphin"; }
     Mod+F11 hotkey-overlay-title="Run an Application: " { spawn "noctalia-shell" "ipc" "call" "launcher" "clipboard"; }
     Mod+Alt+L hotkey-overlay-title="Lock the Screen: " { spawn "noctalia-shell" "ipc" "call" "sessionMenu" "lockAndSuspend"; }
-    Mod+F3 hotkey-overlay-title="Search nixpkgs: " { spawn-sh "pkg=$(fuzzel --dmenu --placeholder \"Enter nix package name...\"); ghostty -e sh -ic \"nix search nixpkgs $pkg; read -s -n1\""; }
+    Mod+F3 hotkey-overlay-title="Search nixpkgs: " { spawn-sh "pkg=$(fuzzel --dmenu --placeholder \"Enter nix package name...\"); [ -n \"$pkg\" ] && alacritty -e sh -ic \"nix search nixpkgs $pkg; read -s -n1\""; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.

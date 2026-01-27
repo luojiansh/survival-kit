@@ -107,10 +107,17 @@
   };
 
   programs.ghostty = {
-    enable = true;
+    enable = false;
     settings = {
       background-opacity = 0.9;
       alpha-blending = "native"; # (or linear-corrected)
+    };
+  };
+
+  programs.alacritty = {
+    enable = true;
+    settings = {
+      window.opacity = 0.9;
     };
   };
 
