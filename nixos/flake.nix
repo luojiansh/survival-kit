@@ -118,6 +118,11 @@
           username = "luoj";
           system = "x86_64-linux";
         };
+        scopio = mkHost {
+          hostname = "scopio";
+          username = "jian";
+          system = "x86_64-linux";
+        };
         rhino = mkHost {
           hostname = "rhino";
           username = "jian";
