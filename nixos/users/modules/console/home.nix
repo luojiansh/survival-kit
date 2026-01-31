@@ -129,16 +129,16 @@ fi
   programs.git = {
     enable = true;
   };
-  # programs.gh = {
-  #   enable = true;
-  #   gitCredentialHelper = {
-  #     enable = true;
-  #     hosts = [
-  #       "https://github.com"
-  #       "https://gist.github.com"
-  #     ];
-  #   };
-  # };
+  programs.gh = {
+    enable = true;
+    gitCredentialHelper = {
+      enable = true;
+      hosts = [
+        "https://github.com"
+        "https://gist.github.com"
+      ];
+    };
+  };
 
   # Neovim
   programs.neovim = {
