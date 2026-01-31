@@ -8,11 +8,13 @@
 
   # Git account
   programs.git.settings = {
-    user = {
-      name = "Jian Luo";
-      email = "jian.luo@at.abb.com";
+    settings = {
+      user = {
+        name = "Jian Luo";
+        email = "jian.luo@at.abb.com";
+      };
+      init.defaultBranch = "main";
     };
-    init.defaultBranch = "main";
   };
 
   # This value determines the Home Manager release that your configuration is
