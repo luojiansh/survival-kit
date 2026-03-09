@@ -61,7 +61,7 @@ Update inputs and lock file
 
 Home Manager (standalone)
 - This flake exposes per-user Home Manager configurations via legacyPackages.
-- Users wired today: jian, luoj.
+- Users wired today: jian, atjiluo.
 
 Build Home activation package
 ```

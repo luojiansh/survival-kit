@@ -82,7 +82,7 @@
         users = [
           "jian" # Linux user
           "jianl" # WSL user
-          "luoj" # Company laptop user
+          "atjiluo" # Company laptop user
         ];
         homeConfig =
           username:
@@ -115,7 +115,7 @@
       nixosConfigurations = {
         "AT-L-PF5S785B" = mkHost {
           hostname = "AT-L-PF5S785B";
-          username = "luoj";
+          username = "atjiluo";
           system = "x86_64-linux";
         };
         scopio = mkHost {

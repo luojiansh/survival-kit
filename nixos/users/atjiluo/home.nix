@@ -3,8 +3,8 @@
     ../modules/console/home.nix
   ];
 
-  home.username = "luoj";
-  home.homeDirectory = "/home/luoj";
+  home.username = "atjiluo";
+  home.homeDirectory = "/home/atjiluo";
 
   # Git account
   programs.git.settings = {

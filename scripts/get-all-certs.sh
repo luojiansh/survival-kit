@@ -52,20 +52,36 @@ New-Item $StoreToDir -ItemType directory
   Get-ChildItem -Path Cert:\\LocalMachine\\CA -ErrorAction SilentlyContinue
 ) | Where-Object { $_ -is [System.Security.Cryptography.X509Certificates.X509Certificate2] } `
   | ForEach-Object {
-    $name = $_.Subject -replace \'[\\W]\', \'_\'
+    $name = ($_.Subject -replace \'[^A-Za-z0-9._-]\', \'_\').Trim(\'_\')
+    if ([string]::IsNullOrWhiteSpace($name)) {
+      $name = "cert"
+    }
+
+    # Keep file names short enough for legacy MAX_PATH limits.
+    $maxBaseLength = 100
+    if ($name.Length -gt $maxBaseLength) {
+      $name = $name.Substring(0, $maxBaseLength)
+    }
+
+    $thumb = $_.Thumbprint
+    if ([string]::IsNullOrWhiteSpace($thumb)) {
+      $thumb = [System.Guid]::NewGuid().ToString("N")
+    }
+
+    $baseName = "{0}--{1}" -f $name, $thumb
     $oPem=new-object System.Text.StringBuilder
     [void]$oPem.AppendLine("-----BEGIN CERTIFICATE-----")
     [void]$oPem.AppendLine([System.Convert]::ToBase64String($_.RawData,$InsertLineBreaks))
     [void]$oPem.AppendLine("-----END CERTIFICATE-----")
 
-    $path = "{0}\\{1}.crt" -f $StoreToDir,$name
+    $path = Join-Path $StoreToDir ("{0}.crt" -f $baseName)
 
     # the exported list of certificates contains certificates with similar subject
     # let\'s put them in separate indexed files
     $idx = 0
     While (Test-Path $path) {
       $idx++
-      $path = "{0}\\{1}--{2}.crt" -f $StoreToDir,$name,$idx
+      $path = Join-Path $StoreToDir ("{0}--{1}.crt" -f $baseName, $idx)
     }
     If ($idx -gt 0) {
       $path
@@ -74,7 +90,7 @@ New-Item $StoreToDir -ItemType directory
     # TODO unfortunately same certificates duplicates each other
     # it\'s better to add a check for duplicates just here
 
-    $oPem.toString() | add-content $path
+    Set-Content -LiteralPath $path -Value $oPem.ToString() -Encoding ascii
     #Exit(0)
   }
 
