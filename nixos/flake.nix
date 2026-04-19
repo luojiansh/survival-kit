@@ -116,18 +116,7 @@
       {
         legacyPackages = {
           homeConfigurations = {
-            "jian@linux" = homeConfig {
-              username = "jian";
-              homeModules = [
-                "console"
-                "desktop"
-              ];
-            };
-            "jian@wsl" = homeConfig {
-              username = "jian";
-              homeModules = [ "console" ];
-            };
-            "jian@darwin" = homeConfig {
+            "jian" = homeConfig {
               username = "jian";
               homeModules = [ "console" ];
             };
