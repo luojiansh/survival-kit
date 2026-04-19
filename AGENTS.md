@@ -24,7 +24,7 @@ Prerequisites
 Build, switch, and validate
 Notes
 - The flake lives in nixos/. Use --flake nixos#... from the repo root, or run commands with workdir=nixos/.
-- Known hosts: AT-L-PF5S785B, rhino, soyo, windy.
+- Known hosts: AT-L-PF5S785B, rhino, scopio, soyo, windy.
 
 NixOS host: build only
 ```
@@ -61,7 +61,7 @@ Update inputs and lock file
 
 Home Manager (standalone)
 - This flake exposes per-user Home Manager configurations via legacyPackages.
-- Users wired today: jian, atjiluo.
+- Users wired today: jian (Linux), jianl (WSL), atjiluo (Company laptop).
 
 Build Home activation package
 ```
@@ -83,6 +83,7 @@ Lint and formatting
 Nix formatting
 - Use nixfmt-rfc-style (binary name: nixfmt) to format all .nix files.
 - Run formatting at repo root or within nixos/.
+- A pre-commit hook is available in `.githooks/pre-commit` that runs `nixfmt` on `.nix` files and `Invoke-ScriptAnalyzer` on `.ps1` files.
 
 Format
 ```
