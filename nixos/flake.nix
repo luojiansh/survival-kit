@@ -95,7 +95,6 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
-        lib = pkgs.lib;
         homeConfig =
           { username, homeModules ? [ "console" ] }:
           home-manager.lib.homeManagerConfiguration {
