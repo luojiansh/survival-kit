@@ -1,25 +1,31 @@
+# Console module — shared terminal environment for all platforms.
+# Provides: Neovim + LazyVim, git, gh, shell config, and dev tooling.
 {
   pkgs,
   inputs,
   ...
-}: {
+}:
+{
   imports = [
     inputs.lazyvim.homeManagerModules.default
   ];
 
-  home.packages = with pkgs; [
-    git
-    lazygit
-    gcc
-    fzf
-    ripgrep
-    fd
-    gh
-    python314Packages.uv
-    nodejs
-    nixfmt
-    rustup
-  ] ++ (pkgs.lib.optional pkgs.stdenv.isLinux wl-clipboard);
+  home.packages =
+    with pkgs;
+    [
+      git
+      lazygit
+      gcc
+      fzf
+      ripgrep
+      fd
+      gh
+      python314Packages.uv
+      nodejs
+      nixfmt
+      rustup
+    ]
+    ++ (pkgs.lib.optional pkgs.stdenv.isLinux wl-clipboard); # Wayland clipboard (Linux only)
 
   home.sessionVariables = {
     EDITOR = "nvim";
@@ -31,6 +37,8 @@
 
   programs.home-manager.enable = true;
 
+  # Source distro-provided rc files if they exist (e.g. on Ubuntu WSL).
+  # Home Manager moves ~/.bashrc aside; this re-includes the original.
   programs.bash = {
     enable = true;
     bashrcExtra = ''
@@ -48,7 +56,7 @@
   programs.readline = {
     enable = true;
     bindings = {
-      "\\C-H" = "backward-kill-word";
+      "\\C-H" = "backward-kill-word"; # Ctrl+Backspace deletes previous word
     };
     variables = {
       editing-mode = "vi";
@@ -59,6 +67,7 @@
     enable = true;
   };
 
+  # GitHub CLI with credential helper for HTTPS clones
   programs.gh = {
     enable = true;
     gitCredentialHelper = {
@@ -70,6 +79,7 @@
     };
   };
 
+  # Neovim: system-level config (plugins are managed by LazyVim below)
   programs.neovim = {
     enable = true;
     defaultEditor = true;
@@ -81,6 +91,7 @@
     ];
   };
 
+  # LazyVim distribution — language extras are toggled here
   programs.lazyvim = {
     enable = true;
     installCoreDependencies = true;
@@ -98,8 +109,8 @@
       };
     };
     extraPackages = with pkgs; [
-      nixd
-      alejandra
+      nixd # Nix LSP
+      alejandra # alternative Nix formatter used by nixd
     ];
     treesitterParsers = with pkgs.vimPlugins.nvim-treesitter-parsers; [
       wgsl

@@ -1,3 +1,7 @@
+# Noctalia Shell settings — exported from the Noctalia settings UI.
+# This is a declarative representation of bar layout, wallpaper, notifications,
+# control center, and other shell preferences. Edit via the Noctalia settings
+# panel; only hand-edit if you know the schema.
 {
   username,
   ...

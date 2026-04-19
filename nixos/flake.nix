@@ -1,8 +1,10 @@
+# Top-level flake: all NixOS hosts, nix-darwin hosts, and standalone
+# Home Manager configurations are wired from this single entry-point.
 {
   description = "NixOS/Home Manager configuration of jian";
 
   inputs = {
-    # Specify the source of Home Manager and Nixpkgs.
+    # --- Core inputs ---
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
     nix-darwin = {
@@ -14,20 +16,18 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
-    lazyvim.url = "github:pfassina/lazyvim-nix";
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew"; # Homebrew management for Darwin
+    lazyvim.url = "github:pfassina/lazyvim-nix"; # LazyVim Neovim distribution
 
+    # --- Desktop shell (Linux only) ---
     noctalia = {
       url = "github:noctalia-dev/noctalia-shell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
     quickshell = {
-      # add ?ref=<tag> to track a tag
-      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
-
-      # THIS IS IMPORTANT
-      # Mismatched system dependencies will lead to crashes and other issues.
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell"; # add ?ref=<tag> to pin
+      # Must follow our nixpkgs — ABI mismatch causes runtime crashes.
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -45,23 +45,26 @@
 
     let
 
-      # Helper to create a unified system configuration
+      # mkSystem: two-stage curried builder.
+      #   Stage 1 — pick the platform (NixOS vs Darwin) and its HM module.
+      #   Stage 2 — provide per-host args (hostname, username, system, etc.).
+      # This avoids duplicating the Home Manager wiring for every host.
       mkSystem =
         {
-          builder,
-          hmModule,
+          builder, # nixpkgs.lib.nixosSystem or nix-darwin.lib.darwinSystem
+          hmModule, # home-manager.nixosModules or darwinModules
         }:
         {
           hostname,
           username,
           system,
-          homeModules ? [ "console" ],
+          homeModules ? [ "console" ], # selects modules from users/modules/<name>/
           extraModules ? [ ],
         }:
         builder {
           inherit system;
 
-          # Pass args to modules
+          # Make flake inputs and host identity available to all modules
           specialArgs = {
             inherit inputs hostname username;
           };
@@ -80,14 +83,17 @@
               };
               home-manager.users.${username} = import ./users/user.nix;
             }
-          ] ++ extraModules;
+          ]
+          ++ extraModules;
         };
 
+      # Partially-applied builders for each platform
       mkNixOS = mkSystem {
         builder = nixpkgs.lib.nixosSystem;
         hmModule = home-manager.nixosModules.home-manager;
       };
 
+      # Darwin wraps mkSystem and injects nix-homebrew automatically
       mkNixDarwin =
         {
           hostname,
@@ -95,49 +101,52 @@
           system,
           homeModules ? [ "console" ],
         }:
-        mkSystem {
-          builder = nix-darwin.lib.darwinSystem;
-          hmModule = home-manager.darwinModules.home-manager;
-        } {
-          inherit
-            hostname
-            username
-            system
-            homeModules
-            ;
-          extraModules = [
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                user = username;
-                autoMigrate = true;
-              };
-            }
-          ];
-        };
+        mkSystem
+          {
+            builder = nix-darwin.lib.darwinSystem;
+            hmModule = home-manager.darwinModules.home-manager;
+          }
+          {
+            inherit
+              hostname
+              username
+              system
+              homeModules
+              ;
+            extraModules = [
+              nix-homebrew.darwinModules.nix-homebrew
+              {
+                nix-homebrew = {
+                  enable = true;
+                  user = username;
+                  autoMigrate = true;
+                };
+              }
+            ];
+          };
 
     in
 
-    # Standalone Home Manager for each architecture
+    # Per-system outputs (standalone Home Manager + checks).
+    # flake-utils generates these for every default system (x86_64-linux,
+    # aarch64-linux, aarch64-darwin, …).
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+        # Standalone Home Manager builder — used on machines where we
+        # don't own the NixOS/Darwin system config (e.g. Ubuntu WSL).
         homeConfig =
-          { username, homeModules ? [ "console" ] }:
+          {
+            username,
+            homeModules ? [ "console" ],
+          }:
           home-manager.lib.homeManagerConfiguration {
             inherit pkgs;
-
-            # Specify your home configuration modules here, for example,
-            # the path to your home.nix.
             modules = [
               ./users/user.nix
-              ./home/standalone.nix
+              ./home/standalone.nix # adds flake + unfree settings
             ];
-
-            # Optionally use extraSpecialArgs
-            # to pass through arguments to home.nix
             extraSpecialArgs = { inherit username inputs homeModules; };
           };
       in
@@ -163,7 +172,7 @@
         };
       }
     )
-    # Host configuration
+    # Merge fixed host outputs into the per-system set above.
     // {
       nixosConfigurations = {
         "AT-L-PF5S785B" = mkNixOS {
@@ -176,19 +185,28 @@
           hostname = "scopio";
           username = "jian";
           system = "x86_64-linux";
-          homeModules = [ "console" "desktop" ];
+          homeModules = [
+            "console"
+            "desktop"
+          ];
         };
         rhino = mkNixOS {
           hostname = "rhino";
           username = "jian";
           system = "x86_64-linux";
-          homeModules = [ "console" "desktop" ];
+          homeModules = [
+            "console"
+            "desktop"
+          ];
         };
         soyo = mkNixOS {
           hostname = "soyo";
           username = "jian";
           system = "x86_64-linux";
-          homeModules = [ "console" "desktop" ];
+          homeModules = [
+            "console"
+            "desktop"
+          ];
         };
         windy = mkNixOS {
           hostname = "windy";

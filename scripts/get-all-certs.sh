@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# Export all Root and CA certificates from the Windows certificate store
+# into /usr/local/share/ca-certificates, then run update-ca-certificates.
+#
+# Strategy: this script runs inside WSL as root and shells out to
+# PowerShell on the Windows side to enumerate certs, writing them to a
+# temp dir on /mnt/c. The PEM files are then copied into the Linux
+# trust store. Works on Ubuntu/Debian (update-ca-certificates) and
+# Fedora (update-ca-trust).
 
 set -eu
 

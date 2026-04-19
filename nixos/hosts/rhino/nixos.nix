@@ -1,3 +1,5 @@
+# rhino — desktop workstation.
+# Composes: common + linux + virtualization profiles, plus host-specific config.
 {
   imports = [
     ./configuration.nix

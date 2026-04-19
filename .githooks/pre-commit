@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Pre-commit hook: auto-formats staged .nix files with nixfmt and runs
+# Invoke-ScriptAnalyzer on staged .ps1 files (if available).
+# Install: git config core.hooksPath .githooks
 set -euo pipefail
 
 staged_files() {

@@ -1,49 +1,29 @@
-# in configuration.nix
+# MacStudio-von-jian — nix-darwin system configuration.
 {
   pkgs,
   lib,
   inputs,
   ...
 }:
-# inputs.self, inputs.nix-darwin, and inputs.nixpkgs can be accessed here
+
 {
-  # List packages installed in system profile. To search by name, run:
-  # $ nix-env -qaP | grep wget
+  # System-wide packages (most tooling is in Home Manager's console module)
   environment.systemPackages = with pkgs; [
     nixfmt
   ];
 
-  # Necessary for using flakes on this system.
+  # Flakes are required for this repo's workflow
   nix.settings.experimental-features = "nix-command flakes";
 
-  # Enable alternative shell support in nix-darwin.
-  # programs.fish.enable = true;
-
-  # Set Git commit hash for darwin-version.
+  # Track the current flake revision for `darwin-version`
   system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
 
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
+  # Pin to the nix-darwin state version at first install.
+  # Run `darwin-rebuild changelog` before bumping.
   system.stateVersion = 6;
 
-  # The platform the configuration will be used on.
   nixpkgs.hostPlatform = "aarch64-darwin";
 
+  # Required by nix-darwin for user-level service management
   system.primaryUser = "jian";
-
-  # Global Configuration
-  #  programs.neovim = {
-  #    enable = true;
-  #    defaultEditor = true;
-  #    viAlias = true;
-  #    vimAlias = true;
-  #    plugins = with pkgs; [
-  #      vimPlugins.nvim-treesitter.withAllGrammars
-  #      #vimPlugins.opencode-nvim
-  #    ];
-  #    extraPackages = with pkgs; [
-  #      tree-sitter
-  #      lua-language-server
-  #    ];
-  #  };
 }
