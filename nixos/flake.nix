@@ -14,6 +14,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     lazyvim.url = "github:pfassina/lazyvim-nix";
 
     noctalia = {
@@ -38,6 +39,7 @@
       home-manager,
       flake-utils,
       nix-darwin,
+      nix-homebrew,
       ...
     }:
 
@@ -54,6 +56,7 @@
           username,
           system,
           homeModules ? [ "console" ],
+          extraModules ? [ ],
         }:
         builder {
           inherit system;
@@ -72,10 +75,12 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "bak";
-              home-manager.extraSpecialArgs = { inherit username inputs homeModules; };
+              home-manager.extraSpecialArgs = {
+                inherit username inputs homeModules;
+              };
               home-manager.users.${username} = import ./users/user.nix;
             }
-          ];
+          ] ++ extraModules;
         };
 
       mkNixOS = mkSystem {
@@ -83,10 +88,34 @@
         hmModule = home-manager.nixosModules.home-manager;
       };
 
-      mkNixDarwin = mkSystem {
-        builder = nix-darwin.lib.darwinSystem;
-        hmModule = home-manager.darwinModules.home-manager;
-      };
+      mkNixDarwin =
+        {
+          hostname,
+          username,
+          system,
+          homeModules ? [ "console" ],
+        }:
+        mkSystem {
+          builder = nix-darwin.lib.darwinSystem;
+          hmModule = home-manager.darwinModules.home-manager;
+        } {
+          inherit
+            hostname
+            username
+            system
+            homeModules
+            ;
+          extraModules = [
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                user = username;
+                autoMigrate = true;
+              };
+            }
+          ];
+        };
 
     in
 
