@@ -99,6 +99,7 @@
     ];
     packages = with pkgs; [
       kdePackages.kate
+      kdePackages.sddm-kcm
     ];
   };
 
