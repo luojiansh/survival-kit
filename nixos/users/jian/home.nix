@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   home.username = "jian";
-  home.homeDirectory = if pkgs.stdenv.isDarwin then "/Users/jian" else "/home/jian";
+  home.homeDirectory = pkgs.lib.mkForce (if pkgs.stdenv.isDarwin then "/Users/jian" else "/home/jian");
 
   # Git account
   programs.git = {
