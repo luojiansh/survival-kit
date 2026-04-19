@@ -1,11 +1,6 @@
-{
-  imports = [
-    ../modules/desktop/home.nix
-    ../modules/console/home.nix
-  ];
-
+{ pkgs, ... }: {
   home.username = "jian";
-  home.homeDirectory = "/home/jian";
+  home.homeDirectory = if pkgs.stdenv.isDarwin then "/Users/jian" else "/home/jian";
 
   # Git account
   programs.git = {

@@ -1,13 +1,9 @@
 {
-  imports = [
-    ../modules/console/home.nix
-  ];
-
   home.username = "atjiluo";
   home.homeDirectory = "/home/atjiluo";
 
   # Git account
-  programs.git.settings = {
+  programs.git = {
     settings = {
       user = {
         name = "Jian Luo";

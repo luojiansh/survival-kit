@@ -1,8 +1,4 @@
 {
-  imports = [
-    ../modules/console/home.nix
-  ];
-
   home.username = "jianl";
   home.homeDirectory = "/home/jianl";
 
