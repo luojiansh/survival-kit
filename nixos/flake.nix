@@ -53,6 +53,7 @@
           hostname,
           username,
           system,
+          homeModules ? [ "console" ],
         }:
         builder {
           inherit system;
@@ -71,7 +72,7 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.backupFileExtension = "bak";
-              home-manager.extraSpecialArgs = { inherit username inputs; };
+              home-manager.extraSpecialArgs = { inherit username inputs homeModules; };
               home-manager.users.${username} = import ./users/user.nix;
             }
           ];
@@ -95,13 +96,8 @@
       let
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
-        users = [
-          "jian" # Linux user
-          "jianl" # WSL user
-          "atjiluo" # Company laptop user
-        ];
         homeConfig =
-          username:
+          { username, homeModules ? [ "console" ] }:
           home-manager.lib.homeManagerConfiguration {
             inherit pkgs;
 
@@ -114,12 +110,36 @@
 
             # Optionally use extraSpecialArgs
             # to pass through arguments to home.nix
-            extraSpecialArgs = { inherit username inputs; };
+            extraSpecialArgs = { inherit username inputs homeModules; };
           };
       in
       {
         legacyPackages = {
-          homeConfigurations = lib.genAttrs users homeConfig;
+          homeConfigurations = {
+            "jian@linux" = homeConfig {
+              username = "jian";
+              homeModules = [
+                "console"
+                "desktop"
+              ];
+            };
+            "jian@wsl" = homeConfig {
+              username = "jian";
+              homeModules = [ "console" ];
+            };
+            "jian@darwin" = homeConfig {
+              username = "jian";
+              homeModules = [ "console" ];
+            };
+            "atjiluo" = homeConfig {
+              username = "atjiluo";
+              homeModules = [ "console" ];
+            };
+            "jianl" = homeConfig {
+              username = "jianl";
+              homeModules = [ "console" ];
+            };
+          };
         };
         checks = {
           sanity = pkgs.runCommand "sanity" { } "echo ok > $out";
@@ -133,26 +153,31 @@
           hostname = "AT-L-PF5S785B";
           username = "atjiluo";
           system = "x86_64-linux";
+          homeModules = [ "console" ];
         };
         scopio = mkNixOS {
           hostname = "scopio";
           username = "jian";
           system = "x86_64-linux";
+          homeModules = [ "console" "desktop" ];
         };
         rhino = mkNixOS {
           hostname = "rhino";
           username = "jian";
           system = "x86_64-linux";
+          homeModules = [ "console" "desktop" ];
         };
         soyo = mkNixOS {
           hostname = "soyo";
           username = "jian";
           system = "x86_64-linux";
+          homeModules = [ "console" "desktop" ];
         };
         windy = mkNixOS {
           hostname = "windy";
           username = "jianl";
           system = "x86_64-linux";
+          homeModules = [ "console" ];
         };
       };
       darwinConfigurations = {
@@ -160,6 +185,7 @@
           hostname = "MacStudio-von-jian";
           username = "jian";
           system = "aarch64-darwin";
+          homeModules = [ "console" ];
         };
       };
     };
