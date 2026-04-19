@@ -37,19 +37,24 @@
       nixpkgs,
       home-manager,
       flake-utils,
+      nix-darwin,
       ...
     }:
 
     let
 
-      # Helper to create a host configuration
-      mkHost =
+      # Helper to create a unified system configuration
+      mkSystem =
+        {
+          builder,
+          hmModule,
+        }:
         {
           hostname,
           username,
           system,
         }:
-        nixpkgs.lib.nixosSystem {
+        builder {
           inherit system;
 
           # Pass args to modules
@@ -61,17 +66,26 @@
             ./hosts/${hostname}/nixos.nix
             ./users/${username}/nixos.nix
 
-            #   home-manager.nixosModules.home-manager
-            #   {
-            #     home-manager.useGlobalPkgs = true;
-            #     home-manager.useUserPackages = true;
-            #     home-manager.backupFileExtension = "bak";
-            #
-            #     home-manager.extraSpecialArgs = { inherit username inputs; };
-            #     home-manager.users.${username} = import ./users/user.nix;
-            #   }
+            hmModule
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.backupFileExtension = "bak";
+              home-manager.extraSpecialArgs = { inherit username inputs; };
+              home-manager.users.${username} = import ./users/user.nix;
+            }
           ];
         };
+
+      mkNixOS = mkSystem {
+        builder = nixpkgs.lib.nixosSystem;
+        hmModule = home-manager.nixosModules.home-manager;
+      };
+
+      mkNixDarwin = mkSystem {
+        builder = nix-darwin.lib.darwinSystem;
+        hmModule = home-manager.darwinModules.home-manager;
+      };
 
     in
 
@@ -115,30 +129,37 @@
     # Host configuration
     // {
       nixosConfigurations = {
-        "AT-L-PF5S785B" = mkHost {
+        "AT-L-PF5S785B" = mkNixOS {
           hostname = "AT-L-PF5S785B";
           username = "atjiluo";
           system = "x86_64-linux";
         };
-        scopio = mkHost {
+        scopio = mkNixOS {
           hostname = "scopio";
           username = "jian";
           system = "x86_64-linux";
         };
-        rhino = mkHost {
+        rhino = mkNixOS {
           hostname = "rhino";
           username = "jian";
           system = "x86_64-linux";
         };
-        soyo = mkHost {
+        soyo = mkNixOS {
           hostname = "soyo";
           username = "jian";
           system = "x86_64-linux";
         };
-        windy = mkHost {
+        windy = mkNixOS {
           hostname = "windy";
           username = "jianl";
           system = "x86_64-linux";
+        };
+      };
+      darwinConfigurations = {
+        "MacStudio-von-jian" = mkNixDarwin {
+          hostname = "MacStudio-von-jian";
+          username = "jian";
+          system = "aarch64-darwin";
         };
       };
     };
