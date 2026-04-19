@@ -10,8 +10,6 @@
     inputs.lazyvim.homeManagerModules.default
   ];
 
-  # The home.packages option allows you to install Nix packages into your
-  # environment.
   home.packages = with pkgs; [
     # # Adds the 'hello' command to your environment. It prints a friendly
     # # "Hello, world!" when run.
@@ -38,7 +36,6 @@
     ripgrep
     fd
     gh
-    wl-clipboard
     #vimPlugins.opencode-nvim
 
     # Agent
@@ -57,7 +54,7 @@
     nixfmt
 
     rustup
-  ];
+  ] ++ (pkgs.lib.optional pkgs.stdenv.isLinux wl-clipboard);
 
   # Home Manager is pretty good at managing dotfiles. The primary way to manage
   # plain files is through 'home.file'.
