@@ -117,4 +117,11 @@
       templ
     ];
   };
+
+  # direnv for project-specific environment variables
+  programs.direnv = {
+    enable = true;
+    enableBashIntegration = true;
+    enableZshIntegration = true;
+  };
 }

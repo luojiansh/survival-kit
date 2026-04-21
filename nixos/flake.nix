@@ -16,7 +16,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    nix-homebrew.url = "github:zhaofengli/nix-homebrew"; # Homebrew management for Darwin
+    nix-homebrew.url = "github:luojiansh/nix-homebrew"; # Homebrew management
     lazyvim.url = "github:pfassina/lazyvim-nix/v15.14.0"; # LazyVim Neovim distribution
 
     # --- Desktop shell (Linux only) ---
@@ -44,6 +44,67 @@
     }:
 
     let
+      # Host specifications: system, user, and home modules
+      linuxHosts = {
+        "AT-L-PF5S785B" = {
+          system = "x86_64-linux";
+          username = "atjiluo";
+          homeModules = [ "console" ];
+        };
+        scopio = {
+          system = "x86_64-linux";
+          username = "jian";
+          homeModules = [
+            "console"
+            "desktop"
+          ];
+        };
+        rhino = {
+          system = "x86_64-linux";
+          username = "jian";
+          homeModules = [
+            "console"
+            "desktop"
+          ];
+        };
+        soyo = {
+          system = "x86_64-linux";
+          username = "jian";
+          homeModules = [
+            "console"
+            "desktop"
+          ];
+        };
+        windy = {
+          system = "x86_64-linux";
+          username = "jianl";
+          homeModules = [ "console" ];
+        };
+      };
+
+      darwinHosts = {
+        "MacStudio-von-jian" = {
+          system = "aarch64-darwin";
+          username = "jian";
+          homeModules = [ "console" ];
+        };
+      };
+
+      # Standalone Home Manager user parameters.
+      standaloneHomeUsers = {
+        "jian" = {
+          username = "jian";
+          homeModules = [ "console" ];
+        };
+        "atjiluo" = {
+          username = "atjiluo";
+          homeModules = [ "console" ];
+        };
+        "jianl" = {
+          username = "jianl";
+          homeModules = [ "console" ];
+        };
+      };
 
       # mkSystem: two-stage curried builder.
       #   Stage 1 — pick the platform (NixOS vs Darwin) and its HM module.
@@ -83,47 +144,28 @@
               };
               home-manager.users.${username} = import ./users/user.nix;
             }
+            nix-homebrew.darwinModules.nix-homebrew
+            {
+              nix-homebrew = {
+                enable = true;
+                user = username;
+                autoMigrate = true;
+              };
+            }
           ]
           ++ extraModules;
         };
 
-      # Partially-applied builders for each platform
-      mkNixOS = mkSystem {
+      # Platform-specific host builders.
+      mkLinuxHost = mkSystem {
         builder = nixpkgs.lib.nixosSystem;
         hmModule = home-manager.nixosModules.home-manager;
       };
 
-      # Darwin wraps mkSystem and injects nix-homebrew automatically
-      mkNixDarwin =
-        {
-          hostname,
-          username,
-          system,
-          homeModules ? [ "console" ],
-        }:
-        mkSystem
-          {
-            builder = nix-darwin.lib.darwinSystem;
-            hmModule = home-manager.darwinModules.home-manager;
-          }
-          {
-            inherit
-              hostname
-              username
-              system
-              homeModules
-              ;
-            extraModules = [
-              nix-homebrew.darwinModules.nix-homebrew
-              {
-                nix-homebrew = {
-                  enable = true;
-                  user = username;
-                  autoMigrate = true;
-                };
-              }
-            ];
-          };
+      mkDarwinHost = mkSystem {
+        builder = nix-darwin.lib.darwinSystem;
+        hmModule = home-manager.darwinModules.home-manager;
+      };
 
     in
 
@@ -152,76 +194,30 @@
       in
       {
         legacyPackages = {
-          homeConfigurations = {
-            "jian" = homeConfig {
-              username = "jian";
-              homeModules = [ "console" ];
-            };
-            "atjiluo" = homeConfig {
-              username = "atjiluo";
-              homeModules = [ "console" ];
-            };
-            "jianl" = homeConfig {
-              username = "jianl";
-              homeModules = [ "console" ];
-            };
-          };
+          homeConfigurations = nixpkgs.lib.mapAttrs (_: cfg: homeConfig cfg) standaloneHomeUsers;
         };
         checks = {
           sanity = pkgs.runCommand "sanity" { } "echo ok > $out";
         };
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [
+            git
+            nixfmt
+            nil
+            statix
+            deadnix
+          ];
+        };
       }
     )
-    # Merge fixed host outputs into the per-system set above.
     // {
-      nixosConfigurations = {
-        "AT-L-PF5S785B" = mkNixOS {
-          hostname = "AT-L-PF5S785B";
-          username = "atjiluo";
-          system = "x86_64-linux";
-          homeModules = [ "console" ];
-        };
-        scopio = mkNixOS {
-          hostname = "scopio";
-          username = "jian";
-          system = "x86_64-linux";
-          homeModules = [
-            "console"
-            "desktop"
-          ];
-        };
-        rhino = mkNixOS {
-          hostname = "rhino";
-          username = "jian";
-          system = "x86_64-linux";
-          homeModules = [
-            "console"
-            "desktop"
-          ];
-        };
-        soyo = mkNixOS {
-          hostname = "soyo";
-          username = "jian";
-          system = "x86_64-linux";
-          homeModules = [
-            "console"
-            "desktop"
-          ];
-        };
-        windy = mkNixOS {
-          hostname = "windy";
-          username = "jianl";
-          system = "x86_64-linux";
-          homeModules = [ "console" ];
-        };
-      };
-      darwinConfigurations = {
-        "MacStudio-von-jian" = mkNixDarwin {
-          hostname = "MacStudio-von-jian";
-          username = "jian";
-          system = "aarch64-darwin";
-          homeModules = [ "console" ];
-        };
-      };
+      # Merge fixed host outputs into the per-system set above.
+      nixosConfigurations = nixpkgs.lib.mapAttrs (
+        hostname: cfg: mkLinuxHost (cfg // { inherit hostname; })
+      ) linuxHosts;
+
+      darwinConfigurations = nixpkgs.lib.mapAttrs (
+        hostname: cfg: mkDarwinHost (cfg // { inherit hostname; })
+      ) darwinHosts;
     };
 }
