@@ -17,7 +17,7 @@
     };
     flake-utils.url = "github:numtide/flake-utils";
     nix-homebrew.url = "github:zhaofengli/nix-homebrew"; # Homebrew management for Darwin
-    lazyvim.url = "github:pfassina/lazyvim-nix"; # LazyVim Neovim distribution
+    lazyvim.url = "github:pfassina/lazyvim-nix/v15.14.0"; # LazyVim Neovim distribution
 
     # --- Desktop shell (Linux only) ---
     noctalia = {

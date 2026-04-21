@@ -11,7 +11,8 @@
   imports = [
     inputs.nixos-wsl.nixosModules.default
   ];
-
+  # --- System services ---
+  services.envfs.enable = true;
   wsl.enable = true;
   wsl.defaultUser = "${username}";
 }
