@@ -16,7 +16,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-utils.url = "github:numtide/flake-utils";
-    nix-homebrew.url = "github:luojiansh/nix-homebrew"; # Homebrew management
+    nix-homebrew.url = "path:/home/atjiluo/workspace/nix-homebrew"; # Local dev override
     lazyvim.url = "github:pfassina/lazyvim-nix/v15.14.0"; # LazyVim Neovim distribution
 
     # --- Desktop shell (Linux only) ---
@@ -49,7 +49,10 @@
         "AT-L-PF5S785B" = {
           system = "x86_64-linux";
           username = "atjiluo";
-          homeModules = [ "console" ];
+          homeModules = [
+            "console"
+            "homebrew"
+          ];
         };
         scopio = {
           system = "x86_64-linux";
@@ -86,7 +89,10 @@
         "MacStudio-von-jian" = {
           system = "aarch64-darwin";
           username = "jian";
-          homeModules = [ "console" ];
+          homeModules = [
+            "console"
+            "homebrew"
+          ];
         };
       };
 
@@ -98,7 +104,10 @@
         };
         "atjiluo" = {
           username = "atjiluo";
-          homeModules = [ "console" ];
+          homeModules = [
+            "console"
+            "homebrew"
+          ];
         };
         "jianl" = {
           username = "jianl";
@@ -143,14 +152,6 @@
                 inherit username inputs homeModules;
               };
               home-manager.users.${username} = import ./users/user.nix;
-            }
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                user = username;
-                autoMigrate = true;
-              };
             }
           ]
           ++ extraModules;
