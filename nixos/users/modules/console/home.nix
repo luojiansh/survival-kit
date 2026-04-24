@@ -124,4 +124,6 @@
     enableBashIntegration = true;
     enableZshIntegration = true;
   };
+
+  programs.zellij.enable = true;
 }

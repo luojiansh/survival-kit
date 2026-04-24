@@ -135,14 +135,17 @@
         "brew-src": "brew-src"
       },
       "locked": {
-        "lastModified": 1777034072,
-        "narHash": "sha256-3kxiTnfOLJ/Pq24eDSW1iNrjxsxT/j/yPa/bD6AugcM=",
-        "path": "/home/atjiluo/workspace/nix-homebrew",
-        "type": "path"
+        "lastModified": 1777043987,
+        "narHash": "sha256-l3sACKVzFFt25OMxWrW+bMac7lhP1tX818QqecKcXsM=",
+        "owner": "luojiansh",
+        "repo": "nix-homebrew",
+        "rev": "0920214a446b4019effa1b2b4c0aed14370d7635",
+        "type": "github"
       },
       "original": {
-        "path": "/home/atjiluo/workspace/nix-homebrew",
-        "type": "path"
+        "owner": "luojiansh",
+        "repo": "nix-homebrew",
+        "type": "github"
       }
     },
     "nixos-wsl": {
