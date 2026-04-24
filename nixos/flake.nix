@@ -94,6 +94,14 @@
             "homebrew"
           ];
         };
+        "Jians-MacBook-Air" = {
+          system = "aarch64-darwin";
+          username = "jian";
+          homeModules = [
+            "console"
+            "homebrew"
+          ];
+        };
       };
 
       # Standalone Home Manager user parameters.
