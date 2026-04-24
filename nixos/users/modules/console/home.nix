@@ -126,4 +126,5 @@
   };
 
   programs.zellij.enable = true;
+  programs.lsd.enable = true;
 }
