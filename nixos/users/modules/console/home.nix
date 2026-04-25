@@ -126,13 +126,12 @@
   };
 
   # direnv for project-specific environment variables
-  programs.direnv = {
-    enable = true;
-    enableBashIntegration = true;
-    enableZshIntegration = true;
-  };
-
+  programs.direnv.enable = true;
   programs.zellij.enable = true;
   programs.lsd.enable = true;
   programs.starship.enable = true;
+  programs.yazi = {
+    enable = true;
+    shellWrapperName = "y";
+  };
 }
