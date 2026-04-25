@@ -15,7 +15,7 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     nix-homebrew.url = "github:luojiansh/nix-homebrew";
     lazyvim.url = "github:pfassina/lazyvim-nix/v15.14.0"; # LazyVim Neovim distribution
 
@@ -37,12 +37,11 @@
       self,
       nixpkgs,
       home-manager,
-      flake-utils,
+      flake-parts,
       nix-darwin,
       nix-homebrew,
       ...
     }:
-
     let
       # Host specifications: system, user, and home modules
       linuxHosts = {
@@ -124,9 +123,6 @@
       };
 
       # mkSystem: two-stage curried builder.
-      #   Stage 1 — pick the platform (NixOS vs Darwin) and its HM module.
-      #   Stage 2 — provide per-host args (hostname, username, system, etc.).
-      # This avoids duplicating the Home Manager wiring for every host.
       mkSystem =
         {
           builder, # nixpkgs.lib.nixosSystem or nix-darwin.lib.darwinSystem
@@ -175,58 +171,71 @@
         builder = nix-darwin.lib.darwinSystem;
         hmModule = home-manager.darwinModules.home-manager;
       };
-
     in
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
 
-    # Per-system outputs (standalone Home Manager + checks).
-    # flake-utils generates these for every default system (x86_64-linux,
-    # aarch64-linux, aarch64-darwin, …).
-    flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import nixpkgs { inherit system; };
-        # Standalone Home Manager builder — used on machines where we
-        # don't own the NixOS/Darwin system config (e.g. Ubuntu WSL).
-        homeConfig =
-          {
-            username,
-            homeModules ? [ "console" ],
-          }:
-          home-manager.lib.homeManagerConfiguration {
-            inherit pkgs;
-            modules = [
-              ./users/user.nix
-              ./home/standalone.nix # adds flake + unfree settings
-            ];
-            extraSpecialArgs = { inherit username inputs homeModules; };
+      perSystem =
+        {
+          config,
+          pkgs,
+          system,
+          ...
+        }:
+        let
+          # Standalone Home Manager builder — used on machines where we
+          # don't own the NixOS/Darwin system config (e.g. Ubuntu WSL).
+          homeConfig =
+            {
+              username,
+              homeModules ? [ "console" ],
+            }:
+            home-manager.lib.homeManagerConfiguration {
+              inherit pkgs;
+              modules = [
+                ./users/user.nix
+                ./home/standalone.nix # adds flake + unfree settings
+              ];
+              extraSpecialArgs = {
+                inherit username inputs homeModules;
+              };
+            };
+        in
+        {
+          legacyPackages = {
+            homeConfigurations = nixpkgs.lib.mapAttrs (_: cfg: homeConfig cfg) standaloneHomeUsers;
           };
-      in
-      {
-        legacyPackages = {
-          homeConfigurations = nixpkgs.lib.mapAttrs (_: cfg: homeConfig cfg) standaloneHomeUsers;
-        };
-        checks = {
-          sanity = pkgs.runCommand "sanity" { } "echo ok > $out";
-        };
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            git
-            nixfmt
-            nil
-            statix
-            deadnix
-          ];
-        };
-      }
-    )
-    // {
-      # Merge fixed host outputs into the per-system set above.
-      nixosConfigurations = nixpkgs.lib.mapAttrs (
-        hostname: cfg: mkLinuxHost (cfg // { inherit hostname; })
-      ) linuxHosts;
 
-      darwinConfigurations = nixpkgs.lib.mapAttrs (
-        hostname: cfg: mkDarwinHost (cfg // { inherit hostname; })
-      ) darwinHosts;
+          checks = {
+            sanity = pkgs.runCommand "sanity" { } "echo ok > $out";
+          };
+
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [
+              git
+              nixfmt
+              nil
+              statix
+              deadnix
+            ];
+          };
+        };
+
+      flake = {
+        # NixOS hosts
+        nixosConfigurations = nixpkgs.lib.mapAttrs (
+          hostname: cfg: mkLinuxHost (cfg // { inherit hostname; })
+        ) linuxHosts;
+
+        # Darwin hosts
+        darwinConfigurations = nixpkgs.lib.mapAttrs (
+          hostname: cfg: mkDarwinHost (cfg // { inherit hostname; })
+        ) darwinHosts;
+      };
     };
 }
