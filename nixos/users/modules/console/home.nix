@@ -40,7 +40,7 @@
   # Source distro-provided rc files if they exist (e.g. on Ubuntu WSL).
   # Home Manager moves ~/.bashrc aside; this re-includes the original.
   programs.bash = {
-    enable = true;
+    enable = pkgs.stdenv.isLinux;
     bashrcExtra = ''
       if [ -f ~/.bashrc.dist ]; then
           . ~/.bashrc.dist
@@ -51,6 +51,13 @@
           . ~/.profile.dist
       fi
     '';
+  };
+
+  programs.zsh = {
+    enable = pkgs.stdenv.isDarwin;
+    enableCompletion = true;
+    autosuggestion.enable = true;
+    syntaxHighlighting.enable = true;
   };
 
   programs.readline = {
@@ -127,4 +134,5 @@
 
   programs.zellij.enable = true;
   programs.lsd.enable = true;
+  programs.starship.enable = true;
 }
