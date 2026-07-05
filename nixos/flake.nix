@@ -16,7 +16,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nix-homebrew.url = "github:luojiansh/nix-homebrew";
+    nix-homebrew.url = "git+file:///home/jian/workspace/nix-homebrew";
     lazyvim.url = "github:pfassina/lazyvim-nix/v15.14.0"; # LazyVim Neovim distribution
 
     # --- Desktop shell (Linux only) ---

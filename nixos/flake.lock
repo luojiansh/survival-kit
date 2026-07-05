@@ -3,16 +3,16 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781226006,
-        "narHash": "sha256-w4ZTuOnhYiDxjaynrMTASzp802QblBWmo3wpB8wVN4Y=",
+        "lastModified": 1782773693,
+        "narHash": "sha256-rnGj+lDW7xvxu2E5uWCWkN3ENmd45zL4dBnX1lGPmnA=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "109191be4988470b51a60a5ef1998520aa24c01b",
+        "rev": "2b3683acbeac84c27669195235785694b72e253e",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
-        "ref": "6.0.1",
+        "ref": "6.0.6",
         "repo": "brew",
         "type": "github"
       }
@@ -135,17 +135,17 @@
         "brew-src": "brew-src"
       },
       "locked": {
-        "lastModified": 1782110047,
-        "narHash": "sha256-NJOb6u4RkFuRq+COxO9rPOmMH4uPYhyasGpPLuzXM/g=",
-        "owner": "luojiansh",
-        "repo": "nix-homebrew",
-        "rev": "042a84f11a146d037b77b3728e6d3359252ba8c8",
-        "type": "github"
+        "lastModified": 1783271803,
+        "narHash": "sha256-kLWKOri56vlHggYM7qOA0cp0VFRMmhTM80lrDE86ggI=",
+        "ref": "refs/heads/main",
+        "rev": "f08778e2f60516a07008fcbcd9ddb5c53ff01cb0",
+        "revCount": 183,
+        "type": "git",
+        "url": "file:///home/jian/workspace/nix-homebrew"
       },
       "original": {
-        "owner": "luojiansh",
-        "repo": "nix-homebrew",
-        "type": "github"
+        "type": "git",
+        "url": "file:///home/jian/workspace/nix-homebrew"
       }
     },
     "nixos-wsl": {
