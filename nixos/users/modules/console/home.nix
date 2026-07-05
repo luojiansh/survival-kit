@@ -21,7 +21,8 @@
       fd
       gh
       python314Packages.uv
-      nodejs
+      python314Packages.pip
+      python314Packages.pipx
       nixfmt
       rustup
     ]
@@ -133,5 +134,13 @@
   programs.yazi = {
     enable = true;
     shellWrapperName = "y";
+  };
+
+  programs.npm = {
+    enable = true;
+  };
+  programs.bun = {
+    enable = true;
+    enableGitIntegration = true;
   };
 }

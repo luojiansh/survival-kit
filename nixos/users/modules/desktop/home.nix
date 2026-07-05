@@ -39,7 +39,7 @@
   xdg.configFile."niri/config.kdl".source = ./config.kdl;
 
   programs.quickshell.enable = true;
-  programs.noctalia-shell.enable = true;
+  programs.noctalia.enable = true;
   programs.cava.enable = true; # audio visualiser
 
   programs.alacritty = {

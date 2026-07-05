@@ -7,7 +7,7 @@
   ...
 }:
 {
-  programs.noctalia-shell = {
+  programs.noctalia = {
     enable = true;
     settings = {
       settingsVersion = 0;
