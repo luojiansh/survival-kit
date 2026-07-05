@@ -59,6 +59,7 @@
           homeModules = [
             "console"
             "desktop"
+            "homebrew"
           ];
         };
         rhino = {

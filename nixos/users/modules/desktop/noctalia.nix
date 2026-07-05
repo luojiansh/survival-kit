@@ -399,7 +399,7 @@
       colorSchemes = {
         useWallpaperColors = false;
         predefinedScheme = "Noctalia (default)";
-        darkMode = false;
+        darkMode = true;
         schedulingMode = "off";
         manualSunrise = "06:30";
         manualSunset = "18:30";
