@@ -63,7 +63,7 @@
         timeout = 600;
         command = "${
           inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-        }/bin/noctalia-shell ipc call lockScreen lock";
+        }/bin/noctalia msg session lock";
       }
     ];
   };
